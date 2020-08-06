@@ -1,5 +1,6 @@
 package com.bakuard.ecsEngine;
 
+import com.bakuard.ecsEngine.utils.Array;
 import com.bakuard.ecsEngine.utils.IntArray;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -253,8 +254,10 @@ class IntArrayTest {
         IntArray emptyArray = new IntArray(0);
         IntArray pattern = new IntArray(1);
         pattern.set(0, 100);
-        emptyArray.binaryInsert(100, Integer::compare);
+        int insertIndex = emptyArray.binaryInsert(100, Integer::compare);
         Assertions.assertEquals(pattern, emptyArray,
+                "Не верно работает метод binaryInsert в случае, когда исходный массив пуст.");
+        Assertions.assertEquals(0, insertIndex,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив пуст.");
 
         IntArray arrayWithOneItem = new IntArray(1);
@@ -262,8 +265,11 @@ class IntArrayTest {
         IntArray pattern2 = new IntArray(2);
         pattern2.set(0, 10);
         pattern2.set(1, 100);
-        arrayWithOneItem.binaryInsert(10, Integer::compare);
+        insertIndex = arrayWithOneItem.binaryInsert(10, Integer::compare);
         Assertions.assertEquals(pattern2, arrayWithOneItem,
+                "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
+                        "элемент и добавляемый элемент меньше его.");
+        Assertions.assertEquals(0, insertIndex,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
                         "элемент и добавляемый элемент меньше его.");
 
@@ -272,8 +278,11 @@ class IntArrayTest {
         IntArray pattern3 = new IntArray(2);
         pattern3.set(0, 100);
         pattern3.set(1, 1000);
-        arrayWithOneItem2.binaryInsert(1000, Integer::compare);
+        insertIndex = arrayWithOneItem2.binaryInsert(1000, Integer::compare);
         Assertions.assertEquals(pattern3, arrayWithOneItem2,
+                "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
+                        "элемент и добавляемый элемент больше его.");
+        Assertions.assertEquals(1, insertIndex ,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
                         "элемент и добавляемый элемент больше его.");
 
@@ -282,8 +291,11 @@ class IntArrayTest {
         IntArray pattern4 = new IntArray(2);
         pattern4.set(0, 100);
         pattern4.set(1, 100);
-        arrayWithOneItem3.binaryInsert(100, Integer::compare);
+        insertIndex = arrayWithOneItem3.binaryInsert(100, Integer::compare);
         Assertions.assertEquals(pattern4, arrayWithOneItem3,
+                "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
+                        "элемент и добавляемый элемент равен ему.");
+        Assertions.assertTrue(insertIndex == 0 || insertIndex == 1,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
                         "элемент и добавляемый элемент равен ему.");
     }
@@ -294,8 +306,11 @@ class IntArrayTest {
         array.addAll(10, 100);
         IntArray pattern = new IntArray(0);
         pattern.addAll(2, 10, 100);
-        array.binaryInsert(2, Integer::compare);
+        int insertIndex = array.binaryInsert(2, Integer::compare);
         Assertions.assertEquals(pattern , array,
+                "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
+                        "порядок возрастающий, добавляемый элемент меньше наименьшего.");
+        Assertions.assertEquals(0, insertIndex,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент меньше наименьшего.");
 
@@ -303,8 +318,11 @@ class IntArrayTest {
         array2.addAll(10, 100);
         IntArray pattern2 = new IntArray(0);
         pattern2.addAll(10, 60, 100);
-        array2.binaryInsert(60, Integer::compare);
+        insertIndex = array2.binaryInsert(60, Integer::compare);
         Assertions.assertEquals(pattern2 , array2,
+                "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
+                        "порядок возрастающий, добавляемый элемент должен встать посередине.");
+        Assertions.assertEquals(1, insertIndex,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент должен встать посередине.");
 
@@ -312,8 +330,11 @@ class IntArrayTest {
         array3.addAll(10, 100);
         IntArray pattern3 = new IntArray(0);
         pattern3.addAll(10, 100, 500);
-        array3.binaryInsert(500, Integer::compare);
+        insertIndex = array3.binaryInsert(500, Integer::compare);
         Assertions.assertEquals(pattern3 , array3,
+                "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
+                        "порядок возрастающий, добавляемый элемент больше наибольшего в массиве.");
+        Assertions.assertEquals(2, insertIndex,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент больше наибольшего в массиве.");
 
@@ -321,8 +342,11 @@ class IntArrayTest {
         array4.addAll(10, 100);
         IntArray pattern4 = new IntArray(0);
         pattern4.addAll(10, 10, 100);
-        array4.binaryInsert(10, Integer::compare);
+        insertIndex = array4.binaryInsert(10, Integer::compare);
         Assertions.assertEquals(pattern4, array4,
+                "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
+                        "порядок возрастающий, добавляемый элемент уже присутсвует в начале массива один раз.");
+        Assertions.assertTrue(insertIndex == 0 || insertIndex == 1,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент уже присутсвует в начале массива один раз.");
 
@@ -330,17 +354,23 @@ class IntArrayTest {
         array5.addAll(10, 100);
         IntArray pattern5 = new IntArray(0);
         pattern5.addAll(10, 100, 100);
-        array5.binaryInsert(100, Integer::compare);
+        insertIndex = array5.binaryInsert(100, Integer::compare);
         Assertions.assertEquals(pattern5, array5,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент уже присутсвует в конце массива один раз.");
+        Assertions.assertTrue(insertIndex == 1 ||insertIndex == 2,
+                "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
+                        "порядок возрастающий, добавляемый элемент уже присутсвует в конце массива один раз.");
 
-        IntArray array6 = new IntArray( 0);
+        IntArray array6 = new IntArray(0);
         array6.addAll(10, 10);
         IntArray pattern6 = new IntArray(0);
         pattern6.addAll(10, 10, 10);
-        array6.binaryInsert(10, Integer::compare);
+        insertIndex = array6.binaryInsert(10, Integer::compare);
         Assertions.assertEquals(pattern6, array6,
+                "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
+                        "порядок возрастающий, все элемнты массива одинаковы и добавляемый элемент присутсвует.");
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 2,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, все элемнты массива одинаковы и добавляемый элемент присутсвует.");
     }
@@ -351,8 +381,12 @@ class IntArrayTest {
         for(int i = 0; i < array.getLength(); i++) array.set(i, i * 10);
         IntArray pattern = new IntArray(1001);
         for(int i = 0; i < pattern.getLength(); i++) pattern.set(i, (i - 1) * 10);
-        array.binaryInsert(-10, Integer::compare);
+        int insertIndex = array.binaryInsert(-10, Integer::compare);
         Assertions.assertEquals(pattern, array,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
+                        "и меньше наименьшего элемента в массиве.");
+        Assertions.assertEquals(0, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и меньше наименьшего элемента в массиве.");
@@ -362,8 +396,12 @@ class IntArrayTest {
         IntArray pattern2 = new IntArray(1000);
         for(int i = 0; i < pattern2.getLength(); i++) pattern2.set(i, i * 10);
         pattern2.insert(556, 5557);
-        array2.binaryInsert(5557, Integer::compare);
+        insertIndex = array2.binaryInsert(5557, Integer::compare);
         Assertions.assertEquals(pattern2, array2,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
+                        "и должен быть добавлен где-то в средину массива.");
+        Assertions.assertEquals(556, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и должен быть добавлен где-то в средину массива.");
@@ -372,8 +410,12 @@ class IntArrayTest {
         for(int i = 0; i < array3.getLength(); i++) array3.set(i, i * 10);
         IntArray pattern3 = new IntArray(1001);
         for(int i = 0; i < pattern3.getLength(); i++) pattern3.set(i, i * 10);
-        array3.binaryInsert(10000, Integer::compare);
+        insertIndex = array3.binaryInsert(10000, Integer::compare);
         Assertions.assertEquals(pattern3, array3,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
+                        "и больше наибольшего элемента в массиве.");
+        Assertions.assertEquals(1000, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и больше наибольшего элемента в массиве.");
@@ -383,8 +425,12 @@ class IntArrayTest {
         IntArray pattern4 = new IntArray(1000);
         for(int i = 0; i < pattern4.getLength(); i++) pattern4.set(i, i * 10);
         pattern4.insert(0, 0);
-        array4.binaryInsert(0, Integer::compare);
+        insertIndex = array4.binaryInsert(0, Integer::compare);
         Assertions.assertEquals(pattern4, array4,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "один раз и находится в начале массива.");
+        Assertions.assertTrue(insertIndex == 0 || insertIndex == 1,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в начале массива.");
@@ -394,8 +440,12 @@ class IntArrayTest {
         IntArray pattern5 = new IntArray(1000);
         for(int i = 0; i < pattern5.getLength(); i++) pattern5.set(i, i * 10);
         pattern5.insert(556, 5557);
-        array5.binaryInsert(5557, Integer::compare);
+        insertIndex = array5.binaryInsert(5557, Integer::compare);
         Assertions.assertEquals(pattern5, array5,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "один раз и находится где-то в середине массива.");
+        Assertions.assertTrue(insertIndex == 556 || insertIndex == 557,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится где-то в середине массива.");
@@ -405,8 +455,12 @@ class IntArrayTest {
         IntArray pattern6 = new IntArray(1000);
         for(int i = 0; i < pattern6.getLength(); i++) pattern6.set(i, i * 10);
         pattern6.insert(1000, 9990);
-        array6.binaryInsert(9990, Integer::compare);
+        insertIndex = array6.binaryInsert(9990, Integer::compare);
         Assertions.assertEquals(pattern6, array6,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "один раз и находится в конце массива.");
+        Assertions.assertTrue(insertIndex == 999 || insertIndex == 1000,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в конце массива.");
@@ -416,14 +470,18 @@ class IntArrayTest {
             if(i < 56) array7.set(i, 0);
             else array7.set(i, i * 10);
         }
-        IntArray pattern7 = new IntArray( 1000);
+        IntArray pattern7 = new IntArray(1000);
         for(int i = 0; i < pattern7.getLength(); i++) {
             if(i < 56) pattern7.set(i, 0);
             else pattern7.set(i, i * 10);
         }
         pattern7.insert(0, 0);
-        array7.binaryInsert(0, Integer::compare);
+        insertIndex = array7.binaryInsert(0, Integer::compare);
         Assertions.assertEquals(pattern7, array7,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "несколько раз и последовательность находится в начале массива.");
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <=56,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в начале массива.");
@@ -439,8 +497,12 @@ class IntArrayTest {
             else pattern8.set(i, i * 10);
         }
         pattern8.insert(255, 2000);
-        array8.binaryInsert(2000, Integer::compare);
+        insertIndex = array8.binaryInsert(2000, Integer::compare);
         Assertions.assertEquals(pattern8, array8,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "несколько раз и последовательность находится где-то в середине массива.");
+        Assertions.assertTrue(insertIndex >= 200 && insertIndex <= 312,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится где-то в середине массива.");
@@ -456,8 +518,12 @@ class IntArrayTest {
             else pattern9.set(i, i * 10);
         }
         pattern9.insert(877, 8710);
-        array9.binaryInsert(8710, Integer::compare);
+        insertIndex = array9.binaryInsert(8710, Integer::compare);
         Assertions.assertEquals(pattern9, array9,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "несколько раз и последовательность находится в конце массива.");
+        Assertions.assertTrue(insertIndex >= 870 && insertIndex <= 1000,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в конце массива.");
@@ -466,8 +532,12 @@ class IntArrayTest {
         for(int i = 0; i < array10.getLength(); i++) array10.set(i, 10);
         IntArray pattern10 = new IntArray(1001);
         for(int i = 0; i < pattern10.getLength(); i++) pattern10.set(i, 10);
-        array10.binaryInsert(10, Integer::compare);
+        insertIndex = array10.binaryInsert(10, Integer::compare);
         Assertions.assertEquals(pattern10, array10,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "и все элементы массива одинаковы.");
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 1000,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "и все элементы массива одинаковы.");
@@ -479,8 +549,12 @@ class IntArrayTest {
         for(int i = 0; i < array.getLength(); i++) array.set(i, i * 10);
         IntArray pattern = new IntArray(1002);
         for(int i = 0; i < pattern.getLength(); i++) pattern.set(i, (i - 1) * 10);
-        array.binaryInsert(-10, Integer::compare);
+        int insertIndex = array.binaryInsert(-10, Integer::compare);
         Assertions.assertEquals(pattern, array,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
+                        "и меньше наименьшего элемента в массиве.");
+        Assertions.assertEquals(0, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и меньше наименьшего элемента в массиве.");
@@ -490,18 +564,26 @@ class IntArrayTest {
         IntArray pattern2 = new IntArray(1001);
         for(int i = 0; i < pattern2.getLength(); i++) pattern2.set(i, i * 10);
         pattern2.insert(556, 5557);
-        array2.binaryInsert(5557, Integer::compare);
+        insertIndex = array2.binaryInsert(5557, Integer::compare);
         Assertions.assertEquals(pattern2, array2,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и должен быть добавлен где-то в средину массива.");
+        Assertions.assertEquals(556, insertIndex,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
+                        "и должен быть добавлен где-то в средину массива.");
 
-        IntArray array3 = new IntArray(1001);
+        IntArray array3 = new IntArray(1000);
         for(int i = 0; i < array3.getLength(); i++) array3.set(i, i * 10);
-        IntArray pattern3 = new IntArray(1002);
+        IntArray pattern3 = new IntArray(1001);
         for(int i = 0; i < pattern3.getLength(); i++) pattern3.set(i, i * 10);
-        array3.binaryInsert(10010, Integer::compare);
+        insertIndex = array3.binaryInsert(10000, Integer::compare);
         Assertions.assertEquals(pattern3, array3,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
+                        "и больше наибольшего элемента в массиве.");
+        Assertions.assertEquals(1000, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и больше наибольшего элемента в массиве.");
@@ -511,8 +593,12 @@ class IntArrayTest {
         IntArray pattern4 = new IntArray(1001);
         for(int i = 0; i < pattern4.getLength(); i++) pattern4.set(i, i * 10);
         pattern4.insert(0, 0);
-        array4.binaryInsert(0, Integer::compare);
+        insertIndex = array4.binaryInsert(0, Integer::compare);
         Assertions.assertEquals(pattern4, array4,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "один раз и находится в начале массива.");
+        Assertions.assertTrue(insertIndex == 0 || insertIndex == 1,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в начале массива.");
@@ -522,8 +608,12 @@ class IntArrayTest {
         IntArray pattern5 = new IntArray(1001);
         for(int i = 0; i < pattern5.getLength(); i++) pattern5.set(i, i * 10);
         pattern5.insert(556, 5557);
-        array5.binaryInsert(5557, Integer::compare);
+        insertIndex = array5.binaryInsert(5557, Integer::compare);
         Assertions.assertEquals(pattern5, array5,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "один раз и находится где-то в середине массива.");
+        Assertions.assertTrue(insertIndex == 556 || insertIndex == 557,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится где-то в середине массива.");
@@ -533,8 +623,12 @@ class IntArrayTest {
         IntArray pattern6 = new IntArray(1001);
         for(int i = 0; i < pattern6.getLength(); i++) pattern6.set(i, i * 10);
         pattern6.insert(1001, 10000);
-        array6.binaryInsert(10000, Integer::compare);
+        insertIndex = array6.binaryInsert(10000, Integer::compare);
         Assertions.assertEquals(pattern6, array6,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "один раз и находится в конце массива.");
+        Assertions.assertTrue(insertIndex == 1000 || insertIndex == 1001,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в конце массива.");
@@ -550,8 +644,12 @@ class IntArrayTest {
             else pattern7.set(i, i * 10);
         }
         pattern7.insert(0, 0);
-        array7.binaryInsert(0, Integer::compare);
+        insertIndex = array7.binaryInsert(0, Integer::compare);
         Assertions.assertEquals(pattern7, array7,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "несколько раз и последовательность находится в начале массива.");
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 56,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в начале массива.");
@@ -567,8 +665,12 @@ class IntArrayTest {
             else pattern8.set(i, i * 10);
         }
         pattern8.insert(255, 2000);
-        array8.binaryInsert(2000, Integer::compare);
+        insertIndex = array8.binaryInsert(2000, Integer::compare);
         Assertions.assertEquals(pattern8, array8,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "несколько раз и последовательность находится где-то в середине массива.");
+        Assertions.assertTrue(insertIndex >= 200 && insertIndex <= 312,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится где-то в середине массива.");
@@ -584,8 +686,12 @@ class IntArrayTest {
             else pattern9.set(i, i * 10);
         }
         pattern9.insert(877, 8710);
-        array9.binaryInsert(8710, Integer::compare);
+        insertIndex = array9.binaryInsert(8710, Integer::compare);
         Assertions.assertEquals(pattern9, array9,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "несколько раз и последовательность находится в конце массива.");
+        Assertions.assertTrue(insertIndex >= 870 && insertIndex <= 1001,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в конце массива.");
@@ -594,8 +700,12 @@ class IntArrayTest {
         for(int i = 0; i < array10.getLength(); i++) array10.set(i, 10);
         IntArray pattern10 = new IntArray(1002);
         for(int i = 0; i < pattern10.getLength(); i++) pattern10.set(i, 10);
-        array10.binaryInsert(10, Integer::compare);
+        insertIndex = array10.binaryInsert(10, Integer::compare);
         Assertions.assertEquals(pattern10, array10,
+                "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
+                        "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
+                        "и все элементы массива одинаковы.");
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 1001,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "и все элементы массива одинаковы.");

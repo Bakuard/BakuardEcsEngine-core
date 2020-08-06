@@ -6,7 +6,6 @@ import com.bakuard.ecsEngine.utils.IntArray;
 import com.bakuard.ecsEngine.utils.IntMap;
 
 import java.util.Iterator;
-import java.util.function.Consumer;
 
 /*
  * Хранит сущности имеющий один и тотже набор компонентов. Коллекция из таких объектов используется для оптимизации
