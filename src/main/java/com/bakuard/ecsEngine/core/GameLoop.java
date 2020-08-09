@@ -112,6 +112,16 @@ public final class GameLoop {
         if(thread != null) thread.interrupt();
     }
 
+    /**
+     * Возвращает true, если игровой цикл на момент вызова метода находится в состоянии обновления или
+     * паузы. Возвращает false, если для игрового цикла был вызван метод stop() или игровой цикл ещё не был
+     * запущен.
+     * @return true - если игровой цикл находится в состоянии обновления или паузы, иначе false.
+     */
+    public boolean isAlive() {
+        return run;
+    }
+
     private void gameLoop() throws InterruptedException {
         SYSTEM_MANAGER.changeSystemsList();
 
