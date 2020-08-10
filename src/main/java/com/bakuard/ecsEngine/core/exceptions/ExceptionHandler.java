@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine.exceptions;
+package com.bakuard.ecsEngine.core.exceptions;
 
 /**
  * Интерфейс определяющий метод последовательной обработки определенного типа ошибок, которые могут возникнуть

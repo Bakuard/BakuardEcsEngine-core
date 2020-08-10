@@ -1,9 +1,9 @@
 package com.bakuard.ecsEngine.core;
 
-import com.bakuard.ecsEngine.utils.Array;
-import com.bakuard.ecsEngine.utils.Bits;
-import com.bakuard.ecsEngine.utils.IntArray;
-import com.bakuard.ecsEngine.utils.IntMap;
+import com.bakuard.ecsEngine.core.utils.Array;
+import com.bakuard.ecsEngine.core.utils.Bits;
+import com.bakuard.ecsEngine.core.utils.IntArray;
+import com.bakuard.ecsEngine.core.utils.IntMap;
 
 import java.util.Iterator;
 

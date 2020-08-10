@@ -1,7 +1,7 @@
 package com.bakuard.ecsEngine.core;
 
-import com.bakuard.ecsEngine.exceptions.ExceptionHandler;
-import com.bakuard.ecsEngine.utils.Bits;
+import com.bakuard.ecsEngine.core.exceptions.ExceptionHandler;
+import com.bakuard.ecsEngine.core.utils.Bits;
 
 import java.util.ArrayDeque;
 

@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine.exceptions;
+package com.bakuard.ecsEngine.core.exceptions;
 
 import com.bakuard.ecsEngine.core.EntityCommandBuffer;
 

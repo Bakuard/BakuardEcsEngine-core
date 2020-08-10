@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine;
 
-import com.bakuard.ecsEngine.utils.Array;
+import com.bakuard.ecsEngine.core.utils.Array;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

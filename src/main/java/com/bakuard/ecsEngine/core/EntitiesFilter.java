@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine.core;
 
-import com.bakuard.ecsEngine.utils.Bits;
+import com.bakuard.ecsEngine.core.utils.Bits;
 
 /**
  * Данный интерфейс определяет методы для фильтрации сущностей при итерации по ним.

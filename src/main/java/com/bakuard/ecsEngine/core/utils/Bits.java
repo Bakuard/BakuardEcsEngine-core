@@ -1,4 +1,4 @@
-package com.bakuard.ecsEngine.utils;
+package com.bakuard.ecsEngine.core.utils;
 
 import java.util.Arrays;
 

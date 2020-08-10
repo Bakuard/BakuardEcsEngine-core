@@ -1,8 +1,8 @@
 package com.bakuard.ecsEngine.core;
 
-import com.bakuard.ecsEngine.utils.Array;
-import com.bakuard.ecsEngine.utils.Bits;
-import com.bakuard.ecsEngine.utils.IntArray;
+import com.bakuard.ecsEngine.core.utils.Array;
+import com.bakuard.ecsEngine.core.utils.Bits;
+import com.bakuard.ecsEngine.core.utils.IntArray;
 
 /**
  * Используется в случае, когда необходимо асинхронно создать большое кол-во новых сущностей, асинхронно изменить

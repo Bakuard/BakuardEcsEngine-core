@@ -1,8 +1,8 @@
 package com.bakuard.ecsEngine.core;
 
-import com.bakuard.ecsEngine.utils.Array;
-import com.bakuard.ecsEngine.utils.IntArray;
-import com.bakuard.ecsEngine.utils.IntMap;
+import com.bakuard.ecsEngine.core.utils.Array;
+import com.bakuard.ecsEngine.core.utils.IntArray;
+import com.bakuard.ecsEngine.core.utils.IntMap;
 
 /**
  * Управляет всеми системами в игровом мире, а также позволяет системам общаться между собой используя

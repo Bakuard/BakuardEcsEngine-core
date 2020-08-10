@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine;
 
-import com.bakuard.ecsEngine.utils.IntMap;
+import com.bakuard.ecsEngine.core.utils.IntMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

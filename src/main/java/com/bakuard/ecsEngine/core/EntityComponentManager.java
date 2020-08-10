@@ -1,8 +1,8 @@
 package com.bakuard.ecsEngine.core;
 
-import com.bakuard.ecsEngine.exceptions.BatchException;
-import com.bakuard.ecsEngine.exceptions.ExceptionHandler;
-import com.bakuard.ecsEngine.utils.*;
+import com.bakuard.ecsEngine.core.exceptions.BatchException;
+import com.bakuard.ecsEngine.core.exceptions.ExceptionHandler;
+import com.bakuard.ecsEngine.core.utils.*;
 
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
