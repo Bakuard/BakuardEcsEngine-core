@@ -20,9 +20,9 @@ public final class SystemManager {
     private final Array<SystemWrapper> ADDED_SYSTEMS;
     private final IntArray DELETED_SYSTEMS;
 
-    private final Array<SystemWrapper> INPUT_SYSTEMS;
-    private final Array<SystemWrapper> LOGIC_SYSTEMS;
-    private final Array<SystemWrapper> RENDER_SYSTEMS;
+    private final Array<SystemWrapper> SYSTEMS;
+    private int indexFirstLogic;
+    private int indexFirstRender;
 
     private final Event[] PORTS;
     private Array<DispatchedEvent> eventsList;
@@ -37,9 +37,7 @@ public final class SystemManager {
         ADDED_SYSTEMS = new Array<>(SystemWrapper.class, 0);
         DELETED_SYSTEMS = new IntArray(0);
 
-        INPUT_SYSTEMS = new Array<>(SystemWrapper.class, 0);
-        LOGIC_SYSTEMS = new Array<>(SystemWrapper.class, 0);
-        RENDER_SYSTEMS = new Array<>(SystemWrapper.class, 0);
+        SYSTEMS = new Array<>(SystemWrapper.class, 0);
 
         PORTS = new Event[numberPorts];
         eventsList = new Array<>(DispatchedEvent.class, 0);
@@ -52,20 +50,27 @@ public final class SystemManager {
      * указанной системы произойдет только в самом начале следующего шага игрового цикла перед рассылкой событий
      * (подробнее см. {@link GameLoop}).
      * <br/><br/>
-     * Задаваемый приориет системы влияет на порядок в котором будет обработана данная система относительно других
-     * систем ввода. Чем больше значение priority - тем раньше будет обрабатываться система на каждом шаге игрового
-     * цикла.
+     * Задаваемые приоритеты определяют в каком порядке дял данной системы будут вызываться методы
+     * {@link System#start()}, {@link System#update(long, long)}, {@link System#stop()}. Чем выще значение
+     * соответсвующего приоритета, тем раньше для данной системы будет вызван соответствующий метод интерфеса
+     * {@link java.lang.System}.
      * <br/><br/>
      * В момент фактического добавления системы может быть сгенерировано исключение IllegalArgumentException по
      * одной из следующих причин: <br/>
      * 1. Если указанный systemID не является уникальным среди всех систем ввода, логики и рендера. <br/>
-     * 2. Указанный priority не является уникальным среди приоритетов других систем ввода.
+     * 2. Указанный priorityOfStart не является уникальным среди всех систем ввода, логики и рендера. <br/>
+     * 2. Указанный priorityOfUpdate не является уникальным среди приоритетов других систем ввода. <br/>
+     * 3. Указанный priorityOfStop не является уникальным среди всех систем ввода, логики и рендера.
      * @param system добавляемая система ввода.
-     * @param priority приоритет добавляемой системы.
-     * @param systemID уникальный идентефикатор системы.
+     * @param systemID никальный идентефикатор системы.
+     * @param priorityOfStart приоритет старта добавляемой системы.
+     * @param priorityOfUpdate приоритет обновления добавляемой системы.
+     * @param priorityOfStop приоритет завершения добавляемой системы
      */
-    public void addInputSystem(System system, int priority, int systemID) {
-        ADDED_SYSTEMS.add(new SystemWrapper(system, priority, systemID, SystemType.INPUT));
+    public void addInputSystem(System system, int systemID, int priorityOfStart, int priorityOfUpdate, int priorityOfStop) {
+        ADDED_SYSTEMS.add(
+                new SystemWrapper(system, systemID, priorityOfStart, priorityOfUpdate, priorityOfStop, SystemType.INPUT)
+        );
     }
 
     /**
@@ -73,39 +78,55 @@ public final class SystemManager {
      * указанной системы произойдет только в самом начале следующего шага игрового цикла перед рассылкой событий
      * (подробнее см. {@link GameLoop}).
      * <br/><br/>
-     * Задаваемый приориет системы влияет на порядок в котором будет обработана данная система относительно других
-     * систем логики. Чем больше priority - тем раньше будет обрабатываться система на каждом шаге игрового цикла.
+     * Задаваемые приоритеты определяют в каком порядке дял данной системы будут вызываться методы
+     * {@link System#start()}, {@link System#update(long, long)}, {@link System#stop()}. Чем выще значение
+     * соответсвующего приоритета, тем раньше для данной системы будет вызван соответствующий метод интерфеса
+     * {@link java.lang.System}.
      * <br/><br/>
      * В момент фактического добавления системы может быть сгенерировано исключение IllegalArgumentException по
      * одной из следующих причин: <br/>
      * 1. Если указанный systemID не является уникальным среди всех систем ввода, логики и рендера. <br/>
-     * 2. Указанный priority не является уникальным среди приоритетов других систем логики.
-     * @param system добавляемая система игровой логики.
-     * @param priority приоритет добавляемой системы.
-     * @param systemID уникальный идентефикатор системы.
+     * 2. Указанный priorityOfStart не является уникальным среди всех систем ввода, логики и рендера. <br/>
+     * 2. Указанный priorityOfUpdate не является уникальным среди приоритетов других систем логики. <br/>
+     * 3. Указанный priorityOfStop не является уникальным среди всех систем ввода, логики и рендера.
+     * @param system добавляемая система ввода.
+     * @param systemID никальный идентефикатор системы.
+     * @param priorityOfStart приоритет старта добавляемой системы.
+     * @param priorityOfUpdate приоритет обновления добавляемой системы.
+     * @param priorityOfStop приоритет завершения добавляемой системы
      */
-    public void addLogicSystem(System system, int priority, int systemID) {
-        ADDED_SYSTEMS.add(new SystemWrapper(system, priority, systemID, SystemType.LOGIC));
+    public void addLogicSystem(System system, int systemID, int priorityOfStart, int priorityOfUpdate, int priorityOfStop) {
+        ADDED_SYSTEMS.add(
+                new SystemWrapper(system, systemID, priorityOfStart, priorityOfUpdate, priorityOfStop, SystemType.LOGIC)
+        );
     }
 
     /**
      * Данный метод добавляет указанную систему рендера в список обрабатывамых систем рендера. Фактическое добавление
-     * указанной системы произойдет только в самом начале следующего шага игрового цикла перед рассылкой событий.
+     * указанной системы произойдет только в самом начале следующего шага игрового цикла перед рассылкой событий
      * (подробнее см. {@link GameLoop}).
      * <br/><br/>
-     * Задаваемый приориет системы влияет на порядок в котором будет обработана данная система относительно других
-     * систем рендера. Чем больше priority - тем раньше будет обрабатываться система на каждом шаге игрового цикла.
+     * Задаваемые приоритеты определяют в каком порядке дял данной системы будут вызываться методы
+     * {@link System#start()}, {@link System#update(long, long)}, {@link System#stop()}. Чем выще значение
+     * соответсвующего приоритета, тем раньше для данной системы будет вызван соответствующий метод интерфеса
+     * {@link java.lang.System}.
      * <br/><br/>
      * В момент фактического добавления системы может быть сгенерировано исключение IllegalArgumentException по
      * одной из следующих причин: <br/>
      * 1. Если указанный systemID не является уникальным среди всех систем ввода, логики и рендера. <br/>
-     * 2. Указанный priority не является уникальным среди приоритетов других систем рендера.
-     * @param system добавляемая система рендера.
-     * @param priority приоритет добавляемой системы.
-     * @param systemID уникальный идентефикатор системы.
+     * 2. Указанный priorityOfStart не является уникальным среди всех систем ввода, логики и рендера. <br/>
+     * 2. Указанный priorityOfUpdate не является уникальным среди приоритетов других систем рендера. <br/>
+     * 3. Указанный priorityOfStop не является уникальным среди всех систем ввода, логики и рендера.
+     * @param system добавляемая система ввода.
+     * @param systemID никальный идентефикатор системы.
+     * @param priorityOfStart приоритет старта добавляемой системы.
+     * @param priorityOfUpdate приоритет обновления добавляемой системы.
+     * @param priorityOfStop приоритет завершения добавляемой системы.
      */
-    public void addRenderSystem(System system, int priority, int systemID) {
-        ADDED_SYSTEMS.add(new SystemWrapper(system, priority, systemID, SystemType.RENDER));
+    public void addRenderSystem(System system, int systemID, int priorityOfStart, int priorityOfUpdate, int priorityOfStop) {
+        ADDED_SYSTEMS.add(
+                new SystemWrapper(system, systemID, priorityOfStart, priorityOfUpdate, priorityOfStop, SystemType.RENDER)
+        );
     }
 
 
@@ -346,59 +367,46 @@ public final class SystemManager {
 
 
     void changeSystemsList() {
-        for(int i = 0; i < ADDED_SYSTEMS.getLength(); ++i) {
-            SystemWrapper wrapper = ADDED_SYSTEMS.get(i);
-            if(getSystemWrapper(wrapper.SYSTEM_ID) != null) {
-                throw new IllegalArgumentException(
-                        "Система с идентификатором " + wrapper.SYSTEM_ID +
-                                " уже находится в списке обрабатываемых систем."
-                );
+        for(int i = ADDED_SYSTEMS.getLength() - 1; i >= 0; --i) {
+            SystemWrapper wrapper = ADDED_SYSTEMS.quickRemove(i);
+            for(int j = 0; j < SYSTEMS.getLength(); ++j) {
+                SystemWrapper temp = SYSTEMS.get(j);
+                if(temp.SYSTEM_ID == wrapper.SYSTEM_ID) {
+                    throw new IllegalArgumentException(
+                            "Система с идентификатором " + wrapper.SYSTEM_ID +
+                                    " уже находится в списке обрабатываемых систем."
+                    );
+                } else if(temp.TYPE == wrapper.TYPE && temp.PRIORITY_OF_UPDATE == wrapper.PRIORITY_OF_UPDATE) {
+                    throw new IllegalArgumentException(
+                            "Среди " + wrapper.TYPE + "систем уже есть система с приоритетом обновления равным " +
+                                    wrapper.PRIORITY_OF_UPDATE
+                    );
+                } else if(temp.PRIORITY_OF_START == wrapper.PRIORITY_OF_START) {
+                    throw new IllegalArgumentException(
+                            "Среди систем уже есть система с приоритетом запуска равным " + wrapper.PRIORITY_OF_START
+                    );
+                } else if(temp.PRIORITY_OF_STOP == wrapper.PRIORITY_OF_STOP) {
+                    throw new IllegalArgumentException(
+                            "Среди систем уже есть система с приоритетом завершения равным " + wrapper.PRIORITY_OF_STOP
+                    );
+                }
             }
 
-            if(wrapper.TYPE == SystemType.INPUT) {
-                if(INPUT_SYSTEMS.binarySearch(wrapper, SystemWrapper::compareTo) != -1) {
-                    throw new IllegalArgumentException(
-                            "Среди систем ввода уже есть система с приоритетом " + wrapper.PRIORITY
-                    );
-                }
-                INPUT_SYSTEMS.binaryInsert(wrapper, SystemWrapper::compareTo);
-            } else if(wrapper.TYPE == SystemType.LOGIC) {
-                if(LOGIC_SYSTEMS.binarySearch(wrapper, SystemWrapper::compareTo) != -1) {
-                    throw new IllegalArgumentException(
-                            "Среди систем логики уже есть система с приоритетом " + wrapper.PRIORITY
-                    );
-                }
-                LOGIC_SYSTEMS.binaryInsert(wrapper, SystemWrapper::compareTo);
-            } else if(wrapper.TYPE == SystemType.RENDER) {
-                if(RENDER_SYSTEMS.binarySearch(wrapper, SystemWrapper::compareTo) != -1) {
-                    throw new IllegalArgumentException(
-                            "Среди систем рендера уже есть система с приоритетом " + wrapper.PRIORITY
-                    );
-                }
-                RENDER_SYSTEMS.binaryInsert(wrapper, SystemWrapper::compareTo);
-            }
+            SYSTEMS.binaryInsert(wrapper, (SystemWrapper a, SystemWrapper b) -> {
+                int result = a.TYPE.compareTo(b.TYPE);
+                if(result != 0) return result;
+                return Integer.compare(b.PRIORITY_OF_UPDATE, a.PRIORITY_OF_UPDATE);
+            });
         }
 
         for(int i = DELETED_SYSTEMS.getLength(); i >= 0; --i) {
             boolean notFindDeletedSystem = true;
 
-            int systemID = DELETED_SYSTEMS.get(i);
+            int systemID = DELETED_SYSTEMS.quickRemove(i);
 
-            for(int j = 0; j < INPUT_SYSTEMS.getLength() && notFindDeletedSystem; ++j) {
-                if(INPUT_SYSTEMS.get(j).SYSTEM_ID == systemID) {
-                    INPUT_SYSTEMS.orderedRemove(i);
-                    notFindDeletedSystem = false;
-                }
-            }
-            for(int j = 0; j < LOGIC_SYSTEMS.getLength() && notFindDeletedSystem; ++j) {
-                if(LOGIC_SYSTEMS.get(j).SYSTEM_ID == systemID) {
-                    LOGIC_SYSTEMS.orderedRemove(i);
-                    notFindDeletedSystem = false;
-                }
-            }
-            for(int j = 0; j < RENDER_SYSTEMS.getLength() && notFindDeletedSystem; ++j) {
-                if(RENDER_SYSTEMS.get(j).SYSTEM_ID == systemID) {
-                    RENDER_SYSTEMS.orderedRemove(i);
+            for(int j = 0; j < SYSTEMS.getLength() && notFindDeletedSystem; ++j) {
+                if(SYSTEMS.get(j).SYSTEM_ID == systemID) {
+                    SYSTEMS.orderedRemove(i);
                     notFindDeletedSystem = false;
                 }
             }
@@ -428,79 +436,83 @@ public final class SystemManager {
     }
 
     void startSystems() {
-        for(int i = 0; i < INPUT_SYSTEMS.getLength(); ++i) INPUT_SYSTEMS.get(i).SYSTEM.start();
-        for(int i = 0; i < LOGIC_SYSTEMS.getLength(); ++i) LOGIC_SYSTEMS.get(i).SYSTEM.start();
-        for(int i = 0; i < RENDER_SYSTEMS.getLength(); ++i) RENDER_SYSTEMS.get(i).SYSTEM.start();
+        SYSTEMS.sort((SystemWrapper a, SystemWrapper b) -> Integer.compare(b.PRIORITY_OF_START, a.PRIORITY_OF_START));
+
+        for(int i = 0; i < SYSTEMS.getLength(); ++i) SYSTEMS.get(i).SYSTEM.start();
+
+        SYSTEMS.sort((SystemWrapper a, SystemWrapper b) -> {
+            int result = a.TYPE.compareTo(b.TYPE);
+            if(result != 0) return result;
+            return Integer.compare(b.PRIORITY_OF_UPDATE, a.PRIORITY_OF_UPDATE);
+        });
     }
 
     void updateInputSystems(long updateInterval, long elapsedInterval) {
-        for(int i = 0; i < INPUT_SYSTEMS.getLength(); ++i) {
-            SystemWrapper wrapper = INPUT_SYSTEMS.get(i);
+        indexFirstLogic = 0;
+        for(int i = 0; i < SYSTEMS.getLength() && SYSTEMS.get(i).TYPE == SystemType.INPUT; ++i) {
+            SystemWrapper wrapper = SYSTEMS.get(i);
+            indexFirstLogic = i + 1;
             if(wrapper.isAwake) wrapper.SYSTEM.update(updateInterval, elapsedInterval);
         }
     }
 
     void updateLogicSystems(long updateInterval, long elapsedInterval) {
-        for(int i = 0; i < LOGIC_SYSTEMS.getLength(); ++i) {
-            SystemWrapper wrapper = LOGIC_SYSTEMS.get(i);
+        indexFirstRender = 0;
+        for(int i = indexFirstLogic; i < SYSTEMS.getLength() && SYSTEMS.get(i).TYPE == SystemType.LOGIC; ++i) {
+            SystemWrapper wrapper = SYSTEMS.get(i);
+            indexFirstRender = i + 1;
             if(wrapper.isAwake) wrapper.SYSTEM.update(updateInterval, elapsedInterval);
         }
     }
 
     void updateRenderSystems(long updateInterval, long elapsedInterval) {
-        for(int i = 0; i < RENDER_SYSTEMS.getLength(); ++i) {
-            SystemWrapper wrapper = RENDER_SYSTEMS.get(i);
+        for(int i = indexFirstRender; i < SYSTEMS.getLength(); ++i) {
+            SystemWrapper wrapper = SYSTEMS.get(i);
             if(wrapper.isAwake) wrapper.SYSTEM.update(updateInterval, elapsedInterval);
-        };
+        }
     }
 
     void stopSystems() {
-        for(int i = 0; i < INPUT_SYSTEMS.getLength(); ++i) INPUT_SYSTEMS.get(i).SYSTEM.stop();
-        for(int i = 0; i < LOGIC_SYSTEMS.getLength(); ++i) LOGIC_SYSTEMS.get(i).SYSTEM.stop();
-        for(int i = 0; i < RENDER_SYSTEMS.getLength(); ++i) RENDER_SYSTEMS.get(i).SYSTEM.stop();
+        SYSTEMS.sort((SystemWrapper a, SystemWrapper b) -> Integer.compare(b.PRIORITY_OF_STOP, a.PRIORITY_OF_STOP));
+
+        for(int i = 0; i < SYSTEMS.getLength(); ++i) SYSTEMS.get(i).SYSTEM.stop();
     }
 
 
     private SystemWrapper getSystemWrapper(int systemID) {
         SystemWrapper wrapper = null;
 
-        for(int i = 0; i < INPUT_SYSTEMS.getLength() && wrapper == null; ++i) {
-            SystemWrapper temp = INPUT_SYSTEMS.get(i);
-            if(temp.SYSTEM_ID == systemID) wrapper = temp;
-        }
-        for(int i = 0; i < LOGIC_SYSTEMS.getLength() && wrapper == null; ++i) {
-            SystemWrapper temp = LOGIC_SYSTEMS.get(i);
-            if(temp.SYSTEM_ID == systemID) wrapper = temp;
-        }
-        for(int i = 0; i < RENDER_SYSTEMS.getLength() && wrapper == null; ++i) {
-            SystemWrapper temp = RENDER_SYSTEMS.get(i);
-            if(temp.SYSTEM_ID == systemID) wrapper = temp;
+        for(int i = 0; i < SYSTEMS.getLength() && wrapper == null; ++i) {
+            if(SYSTEMS.get(i).SYSTEM_ID == systemID) wrapper = SYSTEMS.get(i);
         }
 
         return wrapper;
     }
 
 
-    private final static class SystemWrapper implements Comparable<SystemWrapper> {
+    private final static class SystemWrapper {
 
         final System SYSTEM;
-        final int PRIORITY;
+        final int PRIORITY_OF_START;
+        final int PRIORITY_OF_UPDATE;
+        final int PRIORITY_OF_STOP;
         final int SYSTEM_ID;
         final SystemType TYPE;
         boolean isAwake;
 
-        SystemWrapper(System system, int priority, int systemID, SystemType type) {
+        SystemWrapper(System system,
+                      int systemID,
+                      int priorityOfStart,
+                      int priorityOfUpdate,
+                      int priorityOfStop,
+                      SystemType type) {
             SYSTEM = system;
-            PRIORITY = priority;
+            PRIORITY_OF_START = priorityOfStart;
+            PRIORITY_OF_UPDATE = priorityOfUpdate;
+            PRIORITY_OF_STOP = priorityOfStop;
             SYSTEM_ID = systemID;
             TYPE = type;
             isAwake = true;
-        }
-
-        @Override
-        public int compareTo(SystemWrapper other) {
-            if(other == null) throw new NullPointerException();
-            return Integer.compare(other.PRIORITY, PRIORITY);
         }
 
     }
