@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine;
 
-import com.bakuard.ecsEngine.core.utils.IntMap;
+import com.bakuard.ecsEngine.core.utils.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -272,6 +272,42 @@ class IntMapTest {
     }
 
     @Test
+    public void getValues() {
+        IntMap<Integer> emptyMap = new IntMap<>();
+        Array<Integer> values = emptyMap.getValues(Integer.class);
+        Assertions.assertEquals(0, values.getLength(),
+                "Метод getValues() для пустого объекта IntMap должен возвращать " +
+                        "пустой объект Array.");
+
+        IntMap<Integer> map = new IntMap<>();
+        map.put(1, 10);
+        Array<Integer> values1 = map.getValues(Integer.class);
+        Assertions.assertEquals(map.getSize(), values1.getLength(),
+                "Объект Array возвращаемый методом getValues() должен содержать кол-во элементов " +
+                        "равное кол-ву элементов объекта IntMap, у которого вызывался метод. Данное правило " +
+                        "должно соблюдаться и для случая с одним элементом.");
+        Assertions.assertEquals(map.get(1), values1.get(0),
+                "Возвращаемый объект Array должен содержать все значения содержащиеся " +
+                        "в объектк IntMap у кторого вызывался метод getValues(). Данное правило " +
+                        "должно соблюдаться и для случая с одним элементом.");
+
+        IntMap<Integer> map2 = new IntMap<>();
+        map2.put(1, 10);
+        map2.put(2, 20);
+        map2.put(3, 30);
+        map2.put(4, 40);
+        Array<Integer> values2 = map2.getValues(Integer.class);
+        Assertions.assertEquals(map2.getSize(), values2.getLength(),
+                "Объект Array возвращаемый методом getValues() должен содержать кол-во элементов " +
+                        "равное кол-ву элементов объекта IntMap, у которого вызывался метод.");
+        map2.forEach((IntMap.Node<Integer> node) -> {
+            Assertions.assertTrue(values2.linearSearch(node.getValue()) != -1,
+                    "Возвращаемый объект Array должен содержать все значения содержащиеся " +
+                            "в объектк IntMap у которого вызывался метод getValues().");
+        });
+    }
+
+    @Test
     public void forEach_NotEmptyIntMap() {
         IntMap<String> intMap = new IntMap<>();
         HashSet<String> pattern = new HashSet<>();
@@ -291,18 +327,13 @@ class IntMapTest {
     @Test
     public void forEach_EmptyIntMap() {
         IntMap<String> intMap = new IntMap<>();
-        final int[] countIterations = new int[1];
-        intMap.forEach((IntMap.Node<String> cat) -> ++countIterations[0]);
-
-        Assertions.assertEquals(0, countIterations[0],
-                "Если IntMap пуст, то метод forEach() не должен выполнять ни одной итерации.");
+        intMap.forEach((IntMap.Node<String> cat) ->
+                Assertions.fail("Если IntMap пуст, то метод forEach() не должен выполнять ни одной итерации."));
 
         for(int i = 0; i < 50000; i++) intMap.put(i, "Cat #" + i);
         intMap.clear();
-        intMap.forEach((IntMap.Node<String> cat) -> ++countIterations[0]);
-
-        Assertions.assertEquals(0, countIterations[0],
-                "Если IntMap пуст, то метод forEach() не должен выполнять ни одной итерации.");
+        intMap.forEach((IntMap.Node<String> cat) ->
+                Assertions.fail("Если IntMap пуст, то метод forEach() не должен выполнять ни одной итерации."));
     }
 
     @Test

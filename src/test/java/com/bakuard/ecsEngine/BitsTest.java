@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine;
 
-import com.bakuard.ecsEngine.core.utils.Bits;
+import com.bakuard.ecsEngine.core.utils.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -8,13 +8,9 @@ class BitsTest {
 
     @Test
     void set_get() {
-        Bits bits = new Bits(100000);
-        bits.set(10);
-        bits.set(10007);
-        bits.set(512);
-        bits.set(52170);
+        Bits bits = new Bits(100000).set(10).set(10007).set(512).set(52170);
 
-        for(int i = 0; i < 100000; i++) {
+        for(int i = 0; i < bits.getSize(); i++) {
             if(i == 10 || i == 10007 || i == 512 || i == 52170) {
                 Assertions.assertTrue(bits.get(i),
                         "Метод get() должен возвращать true для бита установленного в единицу через " +
@@ -27,8 +23,8 @@ class BitsTest {
         }
 
         for(int i = 0; i < 100; i++) bits.set(512);
-        Assertions.assertTrue(bits.get(512), "Вызов  метода set() для бита установленного в единицу " +
-                "не должен изменять его значение на ноль.");
+        Assertions.assertTrue(bits.get(512),
+                "Вызов метода set() для бита установленного в единицу не должен изменять его значение на ноль.");
 
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.set(100000),
                 "При выходе индекса за границы размеров Bits, метод set() должен генерировать исключение.");
@@ -38,67 +34,74 @@ class BitsTest {
                 "При выходе индекса за границы размеров Bits, метод set() должен генерировать исключение.");
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.get(-1),
                 "При выходе индекса за границы размеров Bits, метод get() должен генерировать исключение.");
+
+        Assertions.assertSame(bits, bits.set(9000),
+                "Метод set() должен возвращать ссылку на объект, у которого вызывался.");
     }
 
     @Test
     void setAll() {
-        final Bits bits = new Bits(12000);
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.setAll(-1, 0, 13, 100000),
+        Assertions.assertThrows(IndexOutOfBoundsException.class,
+                () -> new Bits(12000).setAll(-1, 0, 13, 100000),
                 "Метод setAll должен генерировать исключение, если хотя бы один из переданых ему " +
                         "индексов не удовлетворяте условию index >= 0 && index < currentBits.getSize().");
 
-        bits.setAll(0,0,0, 12, 12, 12, 500, 2001);
+        Bits bits = new Bits(12000).setAll(0,0,0, 12, 12, 12, 500, 2001);
         for(int i = 0; i < bits.getSize(); i++) {
             if(i == 0 || i == 12 || i == 500 || i == 2001) {
                 Assertions.assertTrue(bits.get(i),
-                        "Метод get() должен возвращать true для бит установленных в  единицу через метод " +
+                        "Метод get() должен возвращать true для бит установленных в единицу через метод " +
                                 "setAll(); Индекс бита = " + i);
             } else {
                 Assertions.assertFalse(bits.get(i),
                         "Метод get() должен возвращать false для бита, для которого в данном случае " +
-                                "не вызывался метод setAll().  Индекс бита = " + i);
+                                "не вызывался метод setAll(). Индекс бита = " + i);
             }
         }
 
-        bits.fill(0, 12000, true);
-        bits.fill(1001, 9702, false);
-        int[] emptyArray = new int[0];
-        bits.setAll(emptyArray);
+        bits = new Bits(12000).
+                fill(0, 12000, true).
+                fill(1001, 9702, false).
+                setAll();
         for(int i = 0; i < bits.getSize(); i++) {
             if(i >= 1001 && i < 9702) {
                 Assertions.assertFalse(bits.get(i),
-                        "Вызов метода setAll() с пустым массивом не должен изменять состояние Bits.");
+                        "Вызов метода setAll() без аргументов не должен изменять состояние Bits.");
             } else {
                 Assertions.assertTrue(bits.get(i),
-                        "Вызов метода setAll() с пустым массивом не должен изменять состояние Bits.");
+                        "Вызов метода setAll() без аргументов не должен изменять состояние Bits.");
             }
         }
+
+        bits = new Bits(10000);
+        Assertions.assertSame(bits, bits.setAll(0,0,0,1,3,5,5007),
+                "Метод setAll() должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
     void clear_get() {
-        Bits bits = new Bits(100000);
+        final Bits bits = new Bits(100000);
 
-        for(int i = 0; i < 100000; i++) bits.clear(i);
-
-        for(int i = 0; i < 100000; i++) {
+        for(int i = 0; i < bits.getSize(); i++) {
+            bits.clear(i);
             Assertions.assertFalse(bits.get(i),
-                    "Метод Bits::clear(int) вызываемый для индексов со значением false " +
+                    "Метод clear(int index) вызываемый для индексов со значением false " +
                             "не должен менять их состояния на true.");
         }
 
         bits.fill(0, 100000, true);
-
         for(int i = 0; i < 100000; i++) {
             if((i < 12003 || i > 50001) && (i < 90702)) bits.clear(i);
         }
-
         for(int i = 0; i < 100000; i++) {
-            if((i >= 12003 && i <= 50001) || (i >= 90702)) {
+            if((i < 12003 || i > 50001) && (i < 90702)) {
+                Assertions.assertFalse(bits.get(i),
+                        "После вызова clear(int index) метод get(int index) должен возвращать " +
+                                "false для всех индексов, для которых вызывался метод clear(int index).");
+            } else {
                 Assertions.assertTrue(bits.get(i),
-                        "После вызова Bits::clear(int) метод Bits::get(int) должен возвращать " +
-                                "false для всех индексов, для которых вызывался метод Bits::clear(int).");
+                        "Метод get(int index) должен возвращать true для всех индексов, для которых " +
+                                "в данном случае метод clear(int index) не вызывался.");
             }
         }
 
@@ -110,43 +113,49 @@ class BitsTest {
                 "При выходе индекса за границы размеров Bits2, метод clear() должен генерировать исключение.");
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.get(-1),
                 "При выходе индекса за границы размеров Bits2, метод get() должен генерировать исключение.");
+
+        Bits original = new Bits(100000);
+        Assertions.assertSame(original, original.clear(9000),
+                "Метод clear(int index) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
     void clearAll() {
+        Assertions.assertThrows(IndexOutOfBoundsException.class,
+                () -> new Bits(12000).clearAll(-1, 0, 13, 100000),
+                "Метод clearAll(int indexes) должен генерировать исключение, если хотя бы один из " +
+                        "переданых ему индексов не удовлетворяте условию " +
+                        "index >= 0 && index < currentBits.getSize().");
+
         final Bits bits = new Bits(12000);
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.clearAll(-1, 0, 13, 100000),
-                "Метод clearAll должен генерировать исключение, если хотя бы один из переданых ему " +
-                        "индексов не удовлетворяте условию index >= 0 && index < currentBits.getSize().");
-
-        bits.fill(0, 12000, true);
-        bits.clearAll(0,0,0, 12, 12, 12, 500, 2001);
+        bits.fill(0, 12000, true).clearAll(0,0,0, 12, 12, 12, 500, 2001);
         for(int i = 0; i < bits.getSize(); i++) {
             if(i == 0 || i == 12 || i == 500 || i == 2001) {
                 Assertions.assertFalse(bits.get(i),
                         "Метод get() должен возвращать false для бит установленных в ноль через метод " +
-                                "clearAll(); Индекс бита = " + i);
+                                "clearAll(int indexes); Индекс бита = " + i);
             } else {
                 Assertions.assertTrue(bits.get(i),
                         "Метод get() не должен возвращать false, если для указанного бита в данном случае " +
-                                "не вызывался метод clearAll(). Индекс бита = " + i);
+                                "не вызывался метод clearAll(int indexes). Индекс бита = " + i);
             }
         }
 
-        bits.fill(0, 12000, true);
-        bits.fill(1001, 9702, false);
-        int[] emptyArray = new int[0];
-        bits.clearAll(emptyArray);
+        bits.fill(0, 12000, true).fill(1001, 9702, false).clearAll(new int[0]);
         for(int i = 0; i < bits.getSize(); i++) {
             if(i >= 1001 && i < 9702) {
                 Assertions.assertFalse(bits.get(i),
-                        "Вызов метода clearAll() с пустым массивом не должен изменять состояние Bits.");
+                        "Вызов метода clearAll(int indexes) с пустым массивом не должен изменять состояние Bits.");
             } else {
                 Assertions.assertTrue(bits.get(i),
-                        "Вызов метода clearAll() с пустым массивом не должен изменять состояние Bits.");
+                        "Вызов метода clearAll(int indexes) с пустым массивом не должен изменять состояние Bits.");
             }
         }
+
+        Bits original = new Bits(10000);
+        Assertions.assertSame(original, original.clearAll(0,0,1,5,6),
+                "Метод clearAll(int indexes) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
@@ -183,10 +192,9 @@ class BitsTest {
 
     @Test
     void clearAll_get() {
-        Bits bits = new Bits(100000);
-        for(int i = 0; i < bits.getSize(); i++) {
-            if(i >= 12000 && i <= 24375 || i >= 80250 && i <= 99001) bits.set(i);
-        }
+        Bits bits = new Bits(100000).
+                fill(12000, 24376, true).
+                fill(80250, 99002, true);
 
         bits.clearAll();
 
@@ -198,16 +206,18 @@ class BitsTest {
                     "После вызова метода clearAll() метод get() должен возвращать false для всех допустимых " +
                             "значений индексов.");
         }
+
+        Bits original = new Bits(10000);
+        Assertions.assertSame(original, original.clearAll(),
+                "Метод clearAll() должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
     void fill_get() {
-        Bits bits = new Bits(100000);
-        bits.fill(12000, 24376, true);
-        bits.fill(80250, 99002, true);
+        Bits bits = new Bits(100000).
+                fill(12000, 24376, true).
+                fill(80250, 99002, true);
 
-        Assertions.assertEquals(100000, bits.getSize(),
-                "Вызов метода fill() не должен влиять на результат возвращаемый методом getSize().");
         for(int i = 0; i < bits.getSize(); i++) {
             if(i >= 12000 && i <= 24375 || i >= 80250 && i <= 99001) {
                 Assertions.assertTrue(bits.get(i),
@@ -220,11 +230,13 @@ class BitsTest {
             }
         }
 
-        Bits bits2 = new Bits(100000);
-        bits2.fill(0, 100000, true);
-        bits2.fill(28001, 56012, false);
         Assertions.assertEquals(100000, bits.getSize(),
-                "Вызов метода fill() не должен влиять на результат возвращаемый методом getSize().");
+                "Вызов метода fill() аргументом flag равным true не должен влиять на результат " +
+                        "возвращаемый методом getSize().");
+
+        Bits bits2 = new Bits(100000).
+                fill(0, 100000, true).
+                fill(28001, 56012, false);
         for(int i = 0; i < bits2.getSize(); i++) {
             if(i >= 28001 && i < 56012) {
                 Assertions.assertFalse(bits2.get(i),
@@ -237,9 +249,14 @@ class BitsTest {
             }
         }
 
-        Bits bits3 = new Bits(bits2);
-        bits3.fill(200, 200, true);
-        Assertions.assertEquals(bits2, bits3);
+        Assertions.assertEquals(100000, bits2.getSize(),
+                "Вызов метода fill() аргументом flag равным false не должен влиять на результат " +
+                        "возвращаемый методом getSize().");
+
+        Bits bits3 = new Bits(bits2).fill(200, 200, true);
+        Assertions.assertEquals(bits2, bits3,
+                "Если значение аргументов fromIndex и toIndex переданных методу fill() совпадают, " +
+                        "метод не должен вносить никаких изменений.");
 
         Assertions.assertThrows(IndexOutOfBoundsException.class, ()-> bits.fill(12, 200000, true),
                 "Если хотя бы для одного из индексов задающих интервал заполнения или очистки бит, " +
@@ -249,6 +266,10 @@ class BitsTest {
                         "не соблюдается условие index >= 0 && index < currentBits.getSize().");
         Assertions.assertThrows(IndexOutOfBoundsException.class, ()-> bits.fill(50000, 200, true),
                 "Если fromIndex > toIndex - метод fill() должен генерировать исключение.");
+
+        Bits original = new Bits(10000);
+        Assertions.assertSame(original, original.fill(100, 700, true),
+                "Метод fill() должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
@@ -360,12 +381,16 @@ class BitsTest {
 
         bits.fill(12070, 30450, true);
         Assertions.assertFalse(bits.isEmpty(),
-                "Непосредственно после вызова fill() со значеним флага равным true, " +
+                "После вызова fill() со значеним флага равным true, " +
                         "метод isEmpty() должен возвращать false.");
 
         bits.fill(12070, 30450, false);
         Assertions.assertTrue(bits.isEmpty(),
                 "Если все биты Bits были очищены с помощью fill() метод isEmpty() должен возвращать true.");
+
+        bits.fill(12070, 30450, true).clearAll();
+        Assertions.assertTrue(bits.isEmpty(),
+                "После вызова clearAll() метод isEmpty() должен возвращать true.");
     }
 
     @Test
@@ -417,14 +442,14 @@ class BitsTest {
 
     @Test
     void expandTo() {
-        Bits bits = new Bits(100000);
-        bits.fill(12000, 24376, true);
-        bits.fill(80250, 99002, true);
+        Bits bits = new Bits(100000).
+                fill(12000, 24376, true).
+                fill(80250, 99002, true);
 
         bits.expandTo(20000);
         Assertions.assertEquals(100000, bits.getSize(),
                 "При вызове expandTo() с аргументом, значение которого меньше значения возвращаемого\n" +
-                        "методом getSize(), метод expandTo() не должен изменять состояние объекта Bits2.");
+                        "методом getSize(), метод expandTo() не должен изменять состояние объекта Bits.");
         for(int i = 0; i < 100000; i++) {
             if(i >= 12000 && i <= 24375 || i >= 80250 && i <= 99001)
                 Assertions.assertTrue(bits.get(i), "Не верно работает метод expandTo().");
@@ -432,11 +457,10 @@ class BitsTest {
                 Assertions.assertFalse(bits.get(i), "Не верно работает метод expandTo().");
         }
 
-        bits.expandTo(200034);
-        bits.fill(150000, 200034, true);
+        bits.expandTo(200034).fill(150000, 200034, true);
         Assertions.assertEquals(200034, bits.getSize(),
                 "При вызове expandTo() с аргументом, значение которого больше значения возвращаемого\n" +
-                        "методом getSize(), метод expandTo() должен изменить состояние объекта Bits2 и \n" +
+                        "методом getSize(), метод expandTo() должен изменить состояние объекта Bits и \n" +
                         "метод getSize() должен возвращать значение переданное методу expandTo().");
         for(int i = 0; i < 200034; i++) {
             if(i >= 12000 && i <= 24375 || i >= 80250 && i <= 99001 || i >= 150000)
@@ -444,831 +468,247 @@ class BitsTest {
             else
                 Assertions.assertFalse(bits.get(i), "Не верно работает метод expandTo().");
         }
+
+        Bits original = new Bits(10000);
+        Assertions.assertEquals(original, original.expandTo(20000),
+                "Метод expandTo(int numberBits) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
     void compressTo_expandTo() {
-        Bits bits = new Bits(100000);
-        bits.fill(12000, 24376, true);
-        bits.fill(80250, 99002, true);
-        Bits answer = new Bits(100000);
-        answer.fill(12000, 24376, true);
-        answer.fill(80250, 99002, true);
+        Bits bits = new Bits(100000).
+                fill(12000, 24376, true).
+                fill(80250, 99002, true);
+        Bits expected = new Bits(100000).
+                fill(12000, 24376, true).
+                fill(80250, 99002, true);
 
         bits.compressTo(100001);
-        Assertions.assertEquals(100000, bits.getSize(),
-                "При вызове compressTo() с аргументом, значение которого больше значения возвращаемого\n" +
-                        "методом getSize(), метод compressTo() не должен изменять состояние объекта Bits2.");
-        Assertions.assertEquals(answer, bits, "Метод compressTo() не должен изменять состояние объекта Bits2,\n" +
-                "если значение аргумента больше или равно getSize().");
+        Assertions.assertEquals(expected, bits,
+                "Метод compressTo() не должен изменять состояние объекта Bits если значение аргумента " +
+                        "больше или равно getSize().");
 
         bits.compressTo(24300);
-        answer = new Bits(24300);
-        answer.fill(12000, 24300, true);
+        expected = new Bits(24300).fill(12000, 24300, true);
         Assertions.assertEquals(24300, bits.getSize(),
-                "При вызове compressTo() с аргументом, значение которого меньше значения возвращаемого\n" +
-                        "методом getSize(), метод compressTo() должен изменить состояние объекта Bits2 и \n" +
+                "При вызове compressTo() с аргументом, значение которого меньше значения возвращаемого " +
+                        "методом getSize(), метод compressTo() должен изменить состояние объекта Bits2 и " +
                         "метод getSize() должен возвращать значение переданное методу compressTo().");
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.get(24300),
                 "Не верно работает метод compressTo().");
-        Assertions.assertEquals(answer, bits, "Не верно работает метод compressTo().");
+        Assertions.assertEquals(expected, bits);
 
-        bits.expandTo(100000);
-        answer = new Bits(100000);
-        answer.fill(12000, 24300, true);
-        Assertions.assertEquals(answer, bits, "Не верно работает метод compressTo().");
+        expected = new Bits(100000).fill(12000, 24300, true);
+        Assertions.assertEquals(expected, bits.expandTo(100000),
+                "После вызова метода compressTo(), биты во внутреннем хранилище, индекс которых " +
+                        "больше или равен значению переданному compressTo(), должны быть установленны в ноль.");
 
-        bits.fill(0, 65, true);
-        bits.compressTo(0);
-        Assertions.assertEquals(0, bits.getSize(),
-                "Не верно работает метод compressTo().");
+        Bits empty = new Bits();
+        bits.fill(0, 65, true).compressTo(0);
+        Assertions.assertEquals(empty, bits);
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.get(0),
                 "Не верно работает метод compressTo().");
-        bits.expandTo(100000);
-        answer = new Bits(100000);
-        Assertions.assertEquals(answer, bits, "Не верно работает метод compressTo().");
+        Assertions.assertEquals(new Bits(100000), bits.expandTo(100000),
+                "После вызова метода compressTo() уменьшающего емкость объекта до нуля, все биты во " +
+                        "внутреннем хранилище, должны быть установленны в ноль.");
+
+        Bits original = new Bits(10000);
+        Assertions.assertEquals(original, original.compressTo(2000),
+                "Метод compressTo(int numberBits) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
-    void and_Operands() {
-        Bits operand1 = new Bits(100000);
+    void copyState() {
+        Bits original = new Bits(100000).fill(23078, 40200, true);
 
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand1, operand1);
-        Assertions.assertEquals(100000, operand1.getSize(),
-                "Если в качестве первого и второго операнда, а также выходного значения передается\n" +
-                        "один и тот же объект, то после выполнения метода он не должен изменить своего состояния.");
-        for(int i = 0; i < operand1.getSize(); i++) {
-            if(i >= 20000 && i <= 50000) {
-                Assertions.assertTrue(operand1.get(i),
-                        "Если в качестве первого и второгго операнад, а также выходного значения передается\n" +
-                                "один и тот же объект, то после выполнения метода он не должен изменить своего состояния.");
-            } else {
-                Assertions.assertFalse(operand1.get(i),
-                        "Если в качестве первого и второгго операнад, а также выходного значения передается\n" +
-                                "один и тот же объект, то после выполнения метода он не должен изменить своего состояния.");
-            }
-        }
+        Assertions.assertEquals(original, new Bits(100).setAll(1,23,45,46,98).copyState(original),
+                "Метод copyState(Bits other) не верно работает, если размер копируемого объекта больше " +
+                        "текущего.");
 
+        Assertions.assertEquals(original,
+                new Bits(150000).fill(56010, 120007, true).copyState(original),
+                "Метод copyState(Bits other) не верно работает, если размер копируемого объекта меньше " +
+                        "текущего.");
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> operand1.and(operand1, new Bits(20000)),
-                "Если размер выходного параметра меньше размера наименьшенго из двух операндов\n" +
-                        "метод должен генерировать исключение.");
+        Bits bits = new Bits(100).setAll(1,23,45,46,98);
+        Assertions.assertSame(bits, bits.copyState(original),
+                "Метод copyState(Bits other) должен возвращать ссылку на объект, у которого он был вызван.");
+    }
 
-        Bits out2 = new Bits(200000);
-        out2.fill(54000, 199700, true);
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand1, out2);
-        Assertions.assertEquals(200000, out2.getSize(),
-                "Вызов метода and() не должен изменять размер выходного параметра.");
-        for(int i = 0; i < out2.getSize(); i++) {
-            if(i >= 20000 && i <= 50000) {
-                Assertions.assertTrue(out2.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(out2.get(i),"Не верно работает метод and().");
-            }
-        }
-        out2 = new Bits(200000);
-        out2.fill(54000, 199700, true);
+    @Test
+    void and_Operand() {
+        Bits original = new Bits(100000).fill(20000, 50001, true);
 
+        Bits operand1 = new Bits(original);
+        Assertions.assertEquals(original, operand1.and(operand1),
+                "Если метод and(Bits other) в качестве аргумента получает тот же объект, у которого " +
+                        "и вызывается, то результатирующий объект должен быть равен исходному по методу equals()."
+        );
 
-        Bits operand2 = new Bits(40000);
-        operand2.fill(10000, 30001, true);
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand2, operand1);
-        Assertions.assertEquals(100000, operand1.getSize(),
-                "Вызов метода and() не должен изменять размер выходного параметра.");
-        for(int i = 0; i < operand1.getSize(); i++) {
-            if(i >= 20000 && i <= 30000) {
-                Assertions.assertTrue(operand1.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(operand1.get(i),"Не верно работает метод and().");
-            }
-        }
+        Bits operand2 = new Bits(40000).fill(10000, 30001, true);
+        Bits expected = new Bits(100000).fill(20000, 30001, true);
+        Assertions.assertEquals(expected, new Bits(original).and(operand2),
+                "Не верно работает метод and(Bits other) в случае, если размер второго оперенда " +
+                        "меньше первого.");
 
-        operand2 = new Bits(200000);
-        operand2.fill(10000, 30001, true);
-        operand2.fill(110000, 150761, true);
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand2, operand1);
-        Assertions.assertEquals(100000, operand1.getSize(),
-                "Вызов метода and() не должен изменять размер выходного параметра.");
-        for(int i = 0; i < operand1.getSize(); i++) {
-            if(i >= 20000 && i <= 30000) {
-                Assertions.assertTrue(operand1.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(operand1.get(i),"Не верно работает метод and().");
-            }
-        }
-
-
-        operand2 = new Bits(40000);
-        operand2.fill(10000, 30001, true);
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand2, operand2);
-        Assertions.assertEquals(40000, operand2.getSize(),
-                "Вызов метода and() не должен изменять размер выходного параметра.");
-        for(int i = 0; i < operand2.getSize(); i++) {
-            if(i >= 20000 && i <= 30000) {
-                Assertions.assertTrue(operand2.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(operand2.get(i),"Не верно работает метод and().");
-            }
-        }
-
-        operand2 = new Bits(200000);
-        operand2.fill(10000, 30001, true);
-        operand2.fill(110000, 150761, true);
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand2, operand2);
-        Assertions.assertEquals(200000, operand2.getSize(),
-                "Вызов метода and() не должен изменять размер выходного параметра.");
-        for(int i = 0; i < operand2.getSize(); i++) {
-            if(i >= 20000 && i <= 30000) {
-                Assertions.assertTrue(operand2.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(operand2.get(i),"Не верно работает метод and().");
-            }
-        }
-
-
-        final Bits operand3 = new Bits(40000);
-        final Bits out3 = new Bits(10000);
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> operand1.and(operand3, out3),
-                "Если размер выходного параметра меньше размера наименьшенго из двух операндов\n" +
-                        "метод должен генерировать исключение.");
-        operand2 = new Bits(200000);
-        operand2.fill(10000, 30001, true);
-        operand2.fill(110000, 150761, true);
-        Bits out4 = new Bits(100000);
-        out4.fill(0, 100000, true);
-        operand1.fill(20000, 50001, true);
-        operand1.and(operand2, out4);
-        Assertions.assertEquals(100000, out4.getSize(),
-                "Вызов метода and() не должен изменять размер выходного параметра.");
-        for(int i = 0; i < out4.getSize(); i++) {
-            if(i >= 20000 && i <= 30000) {
-                Assertions.assertTrue(out4.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(out4.get(i),"Не верно работает метод and().");
-            }
-        }
-        out4 = new Bits(300000);
-        out4.fill(0, 300000, true);
-        operand1.and(operand2, out4);
-        for(int i = 0; i < out4.getSize(); i++) {
-            if(i >= 20000 && i <= 30000) {
-                Assertions.assertTrue(out4.get(i),"Не верно работает метод and().");
-            } else {
-                Assertions.assertFalse(out4.get(i),"Не верно работает метод and().");
-            }
-        }
+        Bits operand3 = new Bits(200000).fill(40000, 120000, true);
+        expected = new Bits(100000).fill(40000, 50001, true);
+        Assertions.assertEquals(expected, new Bits(original).and(operand3),
+                "Не верно работает метод and(Bits other) в случае, если размер второго оперенда больше первого.");
     }
 
     @Test
     void and_Properties() {
-        Bits bits1 = new Bits(100000);
-        bits1.fill(20050, 30999, true);
-        Bits bits2 = new Bits(100000);
-        bits2.fill(20050, 30999, true);
-        Bits bits3 = new Bits(100000);
-        bits3.fill(30000, 90111, true);
-        Bits out = new Bits(100000);
-        Bits out2 = new Bits(100000);
-        Bits out3 = new Bits(100000);
+        Bits bits1 = new Bits(100000).fill(20050, 30999, true);
+        Bits bits2 = new Bits(100000).fill(20050, 30999, true);
+        Bits bits3 = new Bits(100000).fill(30000, 90111, true);
 
-        bits1.and(bits2, out);
-        bits2.and(bits1, out2);
-        Assertions.assertEquals(out, out2, "Не соблюдается свойство коммутативности для метода and().");
+        Assertions.assertEquals(new Bits(bits1).and(new Bits(bits2)), new Bits(bits2).and(new Bits(bits1)),
+                "Не соблюдается свойство коммутативности для метода and(Bits other).");
 
-        bits1.and(bits1, out);
-        Assertions.assertEquals(bits1, out, "Не соблюдается свойство идемпотентности для метода and().");
+        Assertions.assertEquals(bits1, new Bits(bits1).and(bits1),
+                "Не соблюдается свойство идемпотентности для метода and(Bits other).");
 
-        bits1.and(bits2, out);
-        out.and(bits3, out);
-        bits1.and(bits3, out2);
-        out2.and(bits2, out2);
-        bits1.and(bits3, out3);
-        out3.and(bits2, out3);
-        Assertions.assertTrue(out.equals(out2) && out2.equals(out3) && out.equals(out3),
-                "Не соблюдается свойство ассоциативности для метода and().");
+        Assertions.assertEquals(new Bits(bits1).and(bits2).and(bits3), new Bits(bits2).and(bits3).and(bits1),
+                "Не соблюдается свойство ассоциативности для метода and(Bits other).");
 
-        bits3.fill(0, bits3.getSize(), true);
-        bits1.and(bits3, out);
-        Assertions.assertEquals(bits1, out, "Не соблюдается свойство единицы для метода and().");
+        Bits full = new Bits(100000).fill(0, 100000, true);
+        Assertions.assertEquals(bits1, new Bits(bits1).and(full),
+                "Не соблюдается свойство единицы для метода and(Bits other).");
 
-        bits3.clearAll();
-        bits1.and(bits3, out);
-        Assertions.assertEquals(bits3, out, "Не соблюдается свойство нуля для метода and().");
+        Bits empty = new Bits(100000);
+        Assertions.assertEquals(empty, new Bits(bits1).and(empty),
+                "Не соблюдается свойство нуля для метода and(Bits other).");
+
+        Bits original = new Bits(bits2);
+        Assertions.assertSame(original, original.and(bits3),
+                "Метод and(Bits other) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
-    void or_Operands() {
-        Bits answer = new Bits(100000);
-        answer.fill(20000, 50001, true);
-        Bits operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-        operand1.or(operand1, operand1);
-        Assertions.assertEquals(100000, operand1.getSize(),
-                "Если в качестве первого и второго операнда, а также выходного значения передается\n" +
-                        "один и тот же объект, то после выполнения метода он не должен изменить своего состояния.");
-        Assertions.assertEquals(answer, operand1, "Не верно работает метод or().");
+    void or_Operand() {
+        Bits original = new Bits(100000).fill(20000, 50001, true);
 
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                Bits operand = new Bits(100000);
-                operand.fill(20000, 50001, true);
-                operand.and(operand, new Bits(20000));
-            },
-            "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                     "метод должен генерировать исключение."
+        Bits operand1 = new Bits(original);
+        Assertions.assertEquals(original, operand1.or(operand1),
+                "Если метод or() с одним параметром в качестве аргумента получает тот же объект, у " +
+                        "которого и вызывается, то результатрирующий объект должен быть равен исходному по " +
+                        "методу equals()."
         );
 
+        Bits operand2 = new Bits(40000).fill(10000, 30001, true);
+        Bits expected = new Bits(100000).fill(10000, 50001, true);
+        Assertions.assertEquals(expected, new Bits(original).or(operand2),
+                "Не верно работает метод or(Bits other) в случае, если размер второго оперенда " +
+                        "меньше первого.");
 
-        Bits out = new Bits(200000);
-        out.fill(54000, 199700, true);
-        operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-        answer = new Bits(200000);
-        answer.fill(20000, 50001, true);
-        operand1.or(operand1, out);
-        Assertions.assertEquals(200000, out.getSize(),
-                "Вызов метода or() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(answer, out, "Не верно работает метод or().");
-
-
-        Bits operand2 = new Bits(40000);
-        operand2.fill(10000, 30001, true);
-        operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-        answer = new Bits(100000);
-        answer.fill(10000, 50001, true);
-        operand1.or(operand2, operand1);
-        Assertions.assertEquals(100000, operand1.getSize(),
-                "Вызов метода or() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(answer, operand1, "Не верно работает метод or().");
-
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                Bits a = new Bits(200000);
-                a.fill(110000, 150761, true);
-                Bits b = new Bits(100000);
-                b.fill(20000, 50001, true);
-                b.or(a, b);
-            },
-            "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                     "метод должен генерировать исключение."
-        );
-
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                    Bits a = new Bits(40000);
-                    a.fill(110000, 150761, true);
-                    Bits b = new Bits(100000);
-                    b.fill(20000, 50001, true);
-                    b.or(a, a);
-                },
-                "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                        "метод должен генерировать исключение."
-        );
-
-
-        operand2 = new Bits(200000);
-        operand2.fill(110000, 150761, true);
-        operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-        answer = new Bits(200000);
-        answer.fill(20000, 50001, true);
-        answer.fill(110000, 150761, true);
-        operand1.or(operand2, operand2);
-        Assertions.assertEquals(200000, operand2.getSize(),
-                "Вызов метода or() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(answer, operand2, "Не верно работает метод or().");
-
-
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                Bits a = new Bits(100000);
-                Bits b = new Bits(200000);
-                Bits c = new Bits(120000);
-                a.or(b, c);
-            },
-            "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                        "метод должен генерировать исключение."
-        );
-
-
-        operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-        operand2 = new Bits(200000);
-        operand2.fill(10000, 30001, true);
-        operand2.fill(110000, 150761, true);
-        out = new Bits(300000);
-        out.fill(0, 300000, true);
-        answer = new Bits(300000);
-        answer.fill(10000, 50001, true);
-        answer.fill(110000, 150761, true);
-        operand1.or(operand2, out);
-        Assertions.assertEquals(300000, out.getSize(),
-                "Вызов метода or() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(answer, out, "Не верно работает метод or().");
+        Bits operand3 = new Bits(200000).fill(40000, 120000, true);
+        expected = new Bits(200000).fill(20000, 120000, true);
+        Assertions.assertEquals(expected, new Bits(original).or(operand3),
+                "Не верно работает метод or(Bits other) в случае, если размер второго оперенда больше первого.");
     }
 
     @Test
     void or_Properties() {
-        Bits bits1 = new Bits(100000);
-        bits1.fill(20050, 30999, true);
-        Bits bits2 = new Bits(100000);
-        bits2.fill(20050, 30999, true);
-        Bits bits3 = new Bits(100000);
-        bits3.fill(30000, 90111, true);
-        Bits out = new Bits(100000);
-        Bits out2 = new Bits(100000);
-        Bits out3 = new Bits(100000);
+        Bits bits1 = new Bits(100000).fill(20050, 30999, true);
+        Bits bits2 = new Bits(100000).fill(20050, 30999, true);
+        Bits bits3 = new Bits(100000).fill(30000, 90111, true);
 
-        bits1.or(bits2, out);
-        bits2.or(bits1, out2);
-        Assertions.assertEquals(out, out2, "Не соблюдается свойство коммутативности для метода or().");
+        Assertions.assertEquals(new Bits(bits1).or(new Bits(bits2)), new Bits(bits2).or(new Bits(bits1)),
+                "Не соблюдается свойство коммутативности для метода or(Bits other).");
 
-        bits1.and(bits1, out);
-        Assertions.assertEquals(bits1, out, "Не соблюдается свойство идемпотентности для метода or().");
+        Assertions.assertEquals(bits1, new Bits(bits1).or(bits1),
+                "Не соблюдается свойство идемпотентности для метода or(Bits other).");
 
-        bits1.or(bits2, out);
-        out.or(bits3, out);
-        bits1.or(bits3, out2);
-        out2.or(bits2, out2);
-        bits1.or(bits3, out3);
-        out3.or(bits2, out3);
-        Assertions.assertTrue(out.equals(out2) && out2.equals(out3) && out.equals(out3),
-                "Не соблюдается свойство ассоциативности для метода or().");
+        Assertions.assertEquals(new Bits(bits1).or(bits2).or(bits3), new Bits(bits2).or(bits3).or(bits1),
+                "Не соблюдается свойство ассоциативности для метода or(Bits other).");
 
-        bits3.fill(0, bits3.getSize(), true);
-        bits1.or(bits3, out);
-        Assertions.assertEquals(bits3, out, "Не соблюдается свойство единицы для метода and().");
+        Bits full = new Bits(100000).fill(0, 100000, true);
+        Assertions.assertEquals(full, new Bits(bits1).or(full),
+                "Не соблюдается свойство единицы для метода or(Bits other).");
 
-        bits3.clearAll();
-        bits1.or(bits3, out);
-        Assertions.assertEquals(bits1, out, "Не соблюдается свойство нуля для метода and().");
+        Bits empty = new Bits(100000);
+        Assertions.assertEquals(bits1, new Bits(bits1).or(empty),
+                "Не соблюдается свойство нуля для метода or(Bits other).");
+
+        Bits original = new Bits(bits2);
+        Assertions.assertSame(original, original.or(bits3),
+                "Метод or(Bits other) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
-    void xor_Operands() {
-        Bits bits = new Bits(1000);
-        bits.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits expected = new Bits(1000);
-        bits.xor(bits, bits);
-        Assertions.assertEquals(1000, bits.getSize(),
-                "Вызов метода xor() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(expected, bits,
-                "Если в качестве первого и второго операнда, а также выходного значения передается\n" +
-                        "один и тот же объект, то после выполнения метода должно получиться пустое множество.");
+    void xor_Operand() {
+        Bits original = new Bits(1000).setAll(10, 100, 200, 219, 600, 601, 742, 326);
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> bits.and(bits, new Bits(10)),
-                "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                        "метод должен генерировать исключение.");
+        Assertions.assertEquals(new Bits(1000), new Bits(original).xor(original),
+                "При вызове метода xor(), где в качестве аргмента передается один и тот же объект, " +
+                        "результатом должен являться пустой объект Bits.");
 
+        Bits operand2 = new Bits(750).setAll(10, 100, 201, 220, 600, 601, 743, 326);
+        Bits expected = new Bits(1000).setAll(200, 201, 219, 220, 742, 743);
+        Assertions.assertEquals(expected, new Bits(original).xor(operand2),
+                "Не верно работает метод xor() с одним параметром в случае, если второй операнд меньше " +
+                        "по размеру первого.");
 
-        Bits singleOperand = new Bits(1000);
-        singleOperand.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits out = new Bits(10000);
-        out.fill(900, 7020, true);
-        Bits expected2 = new Bits(10000);
-        singleOperand.xor(singleOperand, out);
-        Assertions.assertEquals(10000, out.getSize(),
-                "Вызов метода xor() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(expected2, out,
-                "Не верно работает метод xor() в случае, если длина выходного параметра больше длины " +
-                        "первого и второго аргумента, а вкачестве аргументов выступает один и тот же объект.");
-
-
-        Bits firstOperand = new Bits(1000);
-        firstOperand.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits secondOperand = new Bits(750);
-        secondOperand.setAll(10, 100, 201, 220, 600, 601, 743, 326);
-        Bits expected3 = new Bits(1000);
-        expected3.setAll(200, 201, 219, 220, 742, 743);
-        firstOperand.xor(secondOperand, firstOperand);
-        Assertions.assertEquals(1000, firstOperand.getSize(),
-                "Вызов метода xor() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(expected3, firstOperand,
-                "Не верно работает метод xor() в случае, если в качестве операндов вустпыпают разные " +
-                        "объекты Bits, а в качестве выходного параметра используется первый операнд.\n" +
-                        "первый опернад: " + firstOperand + '\n' +
-                        "второй операнд: " + secondOperand);
-
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                    Bits operandA = new Bits(100000);
-                    operandA.fill(20000, 50001, true);
-                    Bits operandB = new Bits(200000);
-                    operandB.fill(90000, 180650, true);
-                    operandA.xor(operandB, operandA);
-                },
-                "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                        "метод xor() должен генерировать исключение."
-        );
-
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                    Bits operandA = new Bits(100000);
-                    operandA.fill(20000, 50001, true);
-                    Bits operandB = new Bits(50000);
-                    operandB.fill(9000, 42000, true);
-                    operandA.xor(operandB, operandB);
-                },
-                "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                        "метод xor() должен генерировать исключение."
-        );
-
-
-        Bits firstOperand2 = new Bits(1000);
-        firstOperand2.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits secondOperand2 = new Bits(2000);
-        secondOperand2.setAll(10, 100, 201, 220, 600, 601, 743, 326, 1012, 1970);
-        Bits expected4 = new Bits(2000);
-        expected4.setAll(200, 201, 219, 220, 742, 743, 1012, 1970);
-        firstOperand2.xor(secondOperand2, secondOperand2);
-        Assertions.assertEquals(2000, secondOperand2.getSize(),
-                "Вызов метода xor() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(expected4, secondOperand2,
-                "Не верно работает метод xor() в случае, если в качетве опернадов выступают разные объекты " +
-                        "Bits, а в качестве выходного параметра выступает вторйо операнд.");
-
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                    Bits operandA = new Bits(100000);
-                    Bits operandB = new Bits(200000);
-                    Bits operandC = new Bits(120000);
-                    operandA.xor(operandB, operandC);
-                },
-                "Если размер выходного параметра меньше размера наибольшего из двух операндов\n" +
-                        "метод xor() должен генерировать исключение."
-        );
-
-
-        Bits firstOperand3 = new Bits(1000);
-        firstOperand3.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits secondOperand3 = new Bits(2000);
-        secondOperand3.setAll(10, 100, 201, 220, 600, 601, 743, 326, 1012, 1970);
-        Bits out2 = new Bits(3000);
-        out2.fill(0, 3000, true);
-        Bits expected5 = new Bits(3000);
-        expected5.setAll(200, 201, 219, 220, 742, 743, 1012, 1970);
-        firstOperand3.xor(secondOperand3, out2);
-        Assertions.assertEquals(3000, out2.getSize(),
-                "Вызов метода xor() не должен изменять размер выходного параметра.");
-        Assertions.assertEquals(expected5, out2,
-                "Не верно работает метод xor() в случае, если в качетстве операндов и выходного " +
-                        "параметра выступают разные объекты Bits.");
+        Bits operand3 = new Bits(2000).setAll(10, 100, 201, 220, 600, 601, 743, 326, 1001, 1200, 1317, 1500, 1902);
+        expected = new Bits(2000).setAll(200, 201, 219, 220, 742, 743, 1001, 1200, 1317, 1500, 1902);
+        Assertions.assertEquals(expected, new Bits(original).xor(operand3),
+                "Не верно работает метод xor() с одним параметром в случае, если второй операнд больше " +
+                        "по размеру первого.");
     }
 
     @Test
     void xor_Properties() {
-        Bits bits = new Bits(1000);
-        bits.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits bits2 = new Bits(1000);
-        bits2.setAll(10, 100, 201, 220, 600, 601, 743, 326);
+        Bits bits1 = new Bits(1000).setAll(10, 100, 200, 219, 600, 601, 742, 326);
+        Bits bits2 = new Bits(1000).setAll(10, 100, 201, 220, 600, 601, 743, 326);
+        Bits bits3 = new Bits(1000).setAll(200, 201, 219, 220, 744, 745);
+        Bits empty = new Bits(1000);
 
-        Bits out1 = new Bits(1000);
-        Bits out2 = new Bits(1000);
-        bits.xor(bits2, out1);
-        bits2.xor(bits, out2);
-        Assertions.assertEquals(out1, out2,
+        Assertions.assertEquals(new Bits(bits1).xor(new Bits(bits2)), new Bits(bits2).xor(new Bits(bits1)),
                 "Не выполняеся свойство коммутативности для метода xor().");
 
-        Bits bits3 = new Bits(1000);
-        bits3.setAll(200, 201, 219, 220, 744, 745);
-        Bits out3 = new Bits(1000);
-        Bits out4 = new Bits(1000);
-        bits.xor(bits2, out3);
-        out3.xor(bits3, out3);
-        bits2.xor(bits3, out4);
-        out4.xor(bits, out4);
-        Assertions.assertEquals(out3, out4,
-                "Не выполняется свойство ассоциативности для метода xor().");
+        Assertions.assertEquals(new Bits(bits1).or(bits2).or(bits3), new Bits(bits2).or(bits3).or(bits1),
+                "Не соблюдается свойство ассоциативности для метода or(Bits other).");
 
-        Bits out5 = new Bits(1000);
-        bits.xor(bits, out5);
-        Assertions.assertEquals(new Bits(1000), out5,
+        Bits copy = new Bits(bits1);
+        Assertions.assertEquals(empty, copy.xor(copy),
                 "При симметричной разности любого объекта Bits с самим собой, " +
                         "должно получиться пустое множество.");
-        Bits bits4 = new Bits(bits);
-        bits.xor(bits4, out5);
-        Assertions.assertEquals(new Bits(1000), out5,
+
+        Assertions.assertEquals(empty, new Bits(bits1).xor(bits1),
                 "При симметричной разности любых равных объектов Bits, " +
                         "должно получиться пустое множество.");
 
-        Bits bits5 = new Bits(1000);
-        Bits out6 = new Bits(1000);
-        bits.xor(bits5, out6);
-        Assertions.assertEquals(bits, out6,
+        Assertions.assertEquals(bits1, new Bits(bits1).xor(empty),
                 "пустое множество должно являться нейтральным элементом для метода xor().");
+
+        Bits original = new Bits(bits2);
+        Assertions.assertSame(original, original.xor(bits3),
+                "Метод xor(Bits other) должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
-    void not_Operands() {
-        Bits operand = new Bits(100000);
-        operand.fill(20050, 70300, true);
-        Bits answer = new Bits(100000);
-        answer.fill(0, 20050, true);
-        answer.fill(70300, 100000, true);
-        operand.not(operand);
-        Assertions.assertEquals(answer, operand, "Не верно работает метод not().");
+    void not_Operand() {
+        Bits original = new Bits(100000).fill(20000, 50001, true);
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
-                Bits a = new Bits(100000);
-                a.fill(20050, 70300, true);
-                Bits out = new Bits(500);
-                out.fill(0, 500, true);
-                a.not(out);
-            },
-            "Если размер выходного параметра меньше размера операнда, то\n" +
-                "метод должен генерировать исключение."
-        );
-
-        operand = new Bits(100000);
-        operand.fill(20050, 70300, true);
-        Bits out = new Bits(200000);
-        out.fill(70800, 160404, true);
-        answer = new Bits(200000);
-        answer.fill(0, 20050, true);
-        answer.fill(70300, 100000, true);
-        operand.not(out);
-        Assertions.assertEquals(answer, out, "Не верно работает метод not().");
+        Bits expected = new Bits(100000).
+                fill(0, 20000, true).
+                fill(50001, 100000, true);
+        Assertions.assertEquals(expected, new Bits(original).not());
     }
 
     @Test
     void not_Properties() {
-        Bits operand = new Bits(100000);
-        operand.fill(10000, 37601, true);
-        Bits answer = new Bits(100000);
-        answer.fill(10000, 37601, true);
+        Bits expected = new Bits(100000).fill(10000, 37601, true);
 
-        for(int i = 0; i < 100000; i++) {
-            operand.not(operand);
-        }
+        Bits bits = new Bits(expected).not().not();
 
-        Assertions.assertEquals(answer, operand, "Не выполняется свойство двойного отрицания для метода not().");
-    }
+        Assertions.assertEquals(expected, bits,
+                "Не выполняется свойство двойного отрицания для метода not().");
 
-    @Test
-    void and_singleParameter_Operand() {
-        Bits operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-
-        Bits result = operand1.and(operand1);
-        Assertions.assertNotSame(result, operand1,
-                "Метод and() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Assertions.assertEquals(operand1, result,
-                "Если метод and() с одним параметром в качестве аргумента получает тот же объект, у " +
-                        "которого и вызывается, то результатрирующий объект должен быть равен исходному по " +
-                        "методу equals().");
-
-        Bits operand2 = new Bits(40000);
-        operand2.fill(10000, 30001, true);
-        result = operand1.and(operand2);
-        Assertions.assertNotSame(result, operand1,
-                "Метод and() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Assertions.assertNotSame(result, operand2,
-                "Метод and() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Bits checkObject = new Bits(40000);
-        checkObject.fill(20000, 30001, true);
-        Assertions.assertEquals(checkObject, result,
-                "Не верно работает метод and() с одним параметром.");
-
-        Bits operand3 = new Bits(200000);
-        operand3.fill(40000, 120000, true);
-        Bits result2 = operand1.and(operand3);
-        Assertions.assertNotSame(result2, operand1,
-                "Метод and() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Assertions.assertNotSame(result2, operand3,
-                "Метод and() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Bits expected = new Bits(100000);
-        expected.fill(40000, 50001, true);
-        Assertions.assertEquals(expected, result2,
-                "Не верно работает метод and() с одним параметром в случае, если операнды это разные\n " +
-                        "объекты Bits и размер второго операнда больше первого.");
-    }
-
-    @Test
-    void and_singleParameter_Properties() {
-        Bits bits1 = new Bits(100000);
-        bits1.fill(20050, 30999, true);
-        Bits bits2 = new Bits(100000);
-        bits2.fill(20050, 30999, true);
-        Bits bits3 = new Bits(100000);
-        bits3.fill(30000, 90111, true);
-
-        Bits out = bits1.and(bits2);
-        Bits out2 = bits2.and(bits1);
-        Assertions.assertEquals(out, out2,
-                "Не соблюдается свойство коммутативности для метода and() с одним параметром.");
-
-        out = bits1.and(bits1);
-        Assertions.assertEquals(bits1, out,
-                "Не соблюдается свойство идемпотентности для метода and() с одним параметром.");
-
-        out = bits1.and(bits2);
-        out = out.and(bits3);
-        out2 = bits1.and(bits3);
-        out2 = out2.and(bits2);
-        Bits out3 = bits1.and(bits3);
-        out3 = out3.and(bits2);
-        Assertions.assertTrue(out.equals(out2) && out2.equals(out3) && out.equals(out3),
-                "Не соблюдается свойство ассоциативности для метода and()  с одним параметром.");
-
-        bits3.fill(0, bits3.getSize(), true);
-        out = bits1.and(bits3);
-        Assertions.assertEquals(bits1, out,
-                "Не соблюдается свойство единицы для метода and() с одним параметром.");
-
-        bits3.clearAll();
-        out = bits1.and(bits3);
-        Assertions.assertEquals(bits3, out,
-                "Не соблюдается свойство нуля для метода and() с одним параметром.");
-    }
-
-    @Test
-    void or_singleParameter_Operand() {
-        Bits operand1 = new Bits(100000);
-        operand1.fill(20000, 50001, true);
-
-        Bits result = operand1.or(operand1);
-        Assertions.assertNotSame(result, operand1,
-                "Метод or() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Assertions.assertEquals(operand1, result,
-                "Если метод or() с одним параметром в качестве аргумента получает тот же объект, у " +
-                        "которого и вызывается, то результатрирующий объект должен быть равен исходному по " +
-                        "методу equals().");
-
-        Bits operand2 = new Bits(40000);
-        operand2.fill(10000, 30001, true);
-        result = operand1.or(operand2);
-        Assertions.assertNotSame(result, operand1,
-                "Метод or() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Assertions.assertNotSame(result, operand2,
-                "Метод or() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Bits checkObject = new Bits(100000);
-        checkObject.fill(10000, 50001, true);
-        Assertions.assertEquals(checkObject, result,
-                "Не верно работает метод or() с одним параметром в случае, если операнды это разные " +
-                        "объекты Bits и размер второго операнда меньше первого.");
-
-        Bits operand3 = new Bits(200000);
-        operand3.fill(40000, 120000, true);
-        Bits result2 = operand1.or(operand3);
-        Assertions.assertNotSame(result2, operand1,
-                "Метод or() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Assertions.assertNotSame(result2, operand3,
-                "Метод or() с одним параметром должен возвращать НОВЫЙ объект в результате выполнения.");
-        Bits expected = new Bits(200000);
-        expected.fill(20000, 120000, true);
-        Assertions.assertEquals(expected, result2,
-                "Не верно работает метод or() с одним параметром в случае, если операнды это разные " +
-                        "объекты Bits и размер второго операнда больше первого.");
-    }
-
-    @Test
-    void or_singleParameter_Properties() {
-        Bits bits1 = new Bits(100000);
-        bits1.fill(20050, 30999, true);
-        Bits bits2 = new Bits(100000);
-        bits2.fill(20050, 30999, true);
-        Bits bits3 = new Bits(100000);
-        bits3.fill(30000, 90111, true);
-
-        Bits out = bits1.or(bits2);
-        Bits out2 = bits2.or(bits1);
-        Assertions.assertEquals(out, out2,
-                "Не соблюдается свойство коммутативности для метода or() с одним параметром.");
-
-        out = bits1.and(bits1);
-        Assertions.assertEquals(bits1, out,
-                "Не соблюдается свойство идемпотентности для метода or() с одним параметром.");
-
-        out = bits1.or(bits2);
-        out = out.or(bits3);
-        out2 = bits1.or(bits3);
-        out2 = out2.or(bits2);
-        Bits out3 = bits1.or(bits3);
-        out3 = out3.or(bits2);
-        Assertions.assertTrue(out.equals(out2) && out2.equals(out3) && out.equals(out3),
-                "Не соблюдается свойство ассоциативности для метода or() с одним параметром.");
-
-        bits3.fill(0, bits3.getSize(), true);
-        out = bits1.or(bits3);
-        Assertions.assertEquals(bits3, out,
-                "Не соблюдается свойство единицы для метода or() с одним параметром.");
-
-        bits3.clearAll();
-        out = bits1.or(bits3);
-        Assertions.assertEquals(bits1, out,
-                "Не соблюдается свойство нуля для метода or() с одним параметром.");
-    }
-
-    @Test
-    void xor_singleParameter_Operand() {
-        Bits operand1 = new Bits(1000);
-        operand1.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-
-        Bits result = operand1.xor(operand1);
-        Assertions.assertNotSame(result, operand1,
-                "Метод xor() с одним параметром должен возвращать НОВЫЙ объект Bits.");
-        Assertions.assertEquals(new Bits(1000), result,
-                "При вызове метода xor(), где в качестве аргмента передается один и тот же объект, " +
-                        "метод должен вернуть пустой объект Bits того же размера, что и объект у которого " +
-                        "он вызывается.");
-
-        Bits operand2 = new Bits(750);
-        operand2.setAll(10, 100, 201, 220, 600, 601, 743, 326);
-        Bits expected = new Bits(1000);
-        expected.setAll(200, 201, 219, 220, 742, 743);
-        Bits result2 = operand1.xor(operand2);
-        Assertions.assertNotSame(result2, operand1,
-                "Метод xor() с одним параметром должен возвращать НОВЫЙ объект Bits.");
-        Assertions.assertNotSame(result2, operand2,
-                "Метод xor() с одним параметром должен возвращать НОВЫЙ объект Bits.");
-        Assertions.assertEquals(expected, result2,
-                "Не верно работает метод xor() с одним параметром в случае, если в качестве поерандов " +
-                        "выступают разные объекты Bits и второй операнд меньше по размеру первого.");
-
-        Bits operand3 = new Bits(2000);
-        operand3.setAll(10, 100, 201, 220, 600, 601, 743, 326, 1001, 1200, 1317, 1500, 1902);
-        Bits expected2 = new Bits(2000);
-        expected2.setAll(200, 201, 219, 220, 742, 743, 1001, 1200, 1317, 1500, 1902);
-        Bits result3 = operand1.xor(operand3);
-        Assertions.assertNotSame(result3, operand1,
-                "Метод xor() с одним параметром должен возвращать НОВЫЙ объект Bits.");
-        Assertions.assertNotSame(result3, operand3,
-                "Метод xor() с одним параметром должен возвращать НОВЫЙ объект Bits.");
-        Assertions.assertEquals(expected2, result3,
-                "Не верно работает метод xor() с одним параметром в случае, если в качестве операндов " +
-                        "выступают разные объекты Bits и второй операнд больше по размеру первого.");
-    }
-
-    @Test
-    void xor_singleParameter_Properties() {
-        Bits bits = new Bits(1000);
-        bits.setAll(10, 100, 200, 219, 600, 601, 742, 326);
-        Bits bits2 = new Bits(1000);
-        bits2.setAll(10, 100, 201, 220, 600, 601, 743, 326);
-
-        Bits out1 = bits.xor(bits2);
-        Bits out2 = bits2.xor(bits);
-        Assertions.assertEquals(out1, out2,
-                "Не выполняеся свойство коммутативности для метода xor().");
-
-        Bits bits3 = new Bits(1000);
-        bits3.setAll(200, 201, 219, 220, 744, 745);
-        Bits out3 = bits.xor(bits2);
-        out3 = out3.xor(bits3);
-        Bits out4 = bits2.xor(bits3);
-        out4 = out4.xor(bits);
-        Assertions.assertEquals(out3, out4,
-                "Не выполняется свойство ассоциативности для метода xor().");
-
-        Bits out5 = bits.xor(bits);
-        Assertions.assertEquals(new Bits(1000), out5,
-                "При симметричной разности любого объекта Bits с самим собой, " +
-                        "должно получиться пустое множество.");
-        Bits bits4 = new Bits(bits);
-        out5 = bits.xor(bits4);
-        Assertions.assertEquals(new Bits(1000), out5,
-                "При симметричной разности любых равных объектов Bits, " +
-                        "должно получиться пустое множество.");
-
-        Bits bits5 = new Bits(1000);
-        Bits out6 = bits.xor(bits5);
-        Assertions.assertEquals(bits, out6,
-                "пустое множество должно являться нейтральным элементом для метода xor().");
-    }
-
-    @Test
-    void notWithSingleParameter_Operand() {
-        Bits operand = new Bits(100000);
-        operand.fill(20000, 50001, true);
-        Bits result = operand.not();
-
-        Assertions.assertNotSame(operand, result,
-                "Метод not() без параметров должен возвращать НОВЫЙ объект в результате выполнения.");
-
-        Bits checkObject = new Bits(100000);
-        checkObject.fill(0, 20000, true);
-        checkObject.fill(50001, 100000, true);
-        Assertions.assertEquals(checkObject, result,
-                "Не верно работает метод not() без параметров.");
-    }
-
-    @Test
-    void notWithParameter_Properties() {
-        Bits operand = new Bits(100000);
-        operand.fill(10000, 37601, true);
-        Bits answer = new Bits(100000);
-        answer.fill(10000, 37601, true);
-
-        for(int i = 0; i < 100000; i++) operand = operand.not();
-
-        Assertions.assertEquals(answer, operand, "Не выполняется свойство двойного отрицания для метода not().");
+        Bits original = new Bits(expected);
+        Assertions.assertSame(original, original.not(),
+                "Метод not() должен возвращать ссылку на объект, у которого он был вызван.");
     }
 
     @Test
@@ -1406,9 +846,6 @@ class BitsTest {
                 "Не верно работает метод equals().");
         Assertions.assertEquals(bits3.equals(bits1), bits1.equals(bits3),
                 "Не соблюдается свойство симметрисности для метода equals().");
-
-        Assertions.assertTrue(!bits1.equals(bits2) && !bits2.equals(bits3) && !bits1.equals(bits3),
-                "Не соблюдается свойство транзитивности для сетода equals().");
 
         bits2 = new Bits(10000);
         bits2.fill(2001, 7099, true);

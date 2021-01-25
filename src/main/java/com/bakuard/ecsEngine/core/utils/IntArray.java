@@ -26,9 +26,9 @@ public final class IntArray {
     }
 
     /**
-     * Возвращает объект хранящийся в ячейке с указаным индексом.
+     * Возвращает элемент хранящийся в ячейке с указаным индексом.
      * @param index индекс ячейки массива.
-     * @return объект хранящийся в ячейке с указаным индексом.
+     * @return элемент хранящийся в ячейке с указаным индексом.
      * @throws IndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
      */
     public int get(int index) {
@@ -250,14 +250,15 @@ public final class IntArray {
     }
 
     /**
-     * Возвращает индекс первого встретевшегося элемента с указанным значением или -1, если массив
-     * в указанном диапозоне не содержит элемент с заданным значением. Выполняет линейный поиск.
+     * Возвращает индекс первого(с начала интервала) встретевшегося элемента с указанным значением или -1,
+     * если массив в указанном диапозоне не содержит элемент с заданным значением. Выполняет линейный поиск
+     * начиная с элемента под индексом fromIndex(включая) и до элемента с индексом toIndex(исключая).
      * Если fromIndex == toIndex, метод возвращает -1.
      * @param value значение элеменета, для которого осуществляется поиск.
      * @param fromIndex индекс первого элемента с которого начнется поиск (включая).
      * @param toIndex индекс элемента, до которого ведется поиск (исключая).
      * @return индекс первого встретевшегося элемента с указанным значением.
-     * @throws IndexOutOfBoundsException если fromIndex < 0 || toIndex >= length || fromIndex > toIndex
+     * @throws IndexOutOfBoundsException если fromIndex < 0 || toIndex > length || fromIndex > toIndex
      */
     public int linearSearch(int value, int fromIndex, int toIndex) {
         rangeCheck(fromIndex, toIndex);
@@ -272,7 +273,7 @@ public final class IntArray {
      * Данный метод требует, чтобы массив был предварительно отсортирован и для сравнения использовался
      * Comparator задающий тот же линейный порядок, что и порядок отсортированного массива. Если это условие
      * не соблюдается - результ не определен.
-     * @param value значение элеменета, для которого осуществляется поиск.
+     * @param value значение элемента, для которого осуществляется поиск.
      * @param comparator объект выполняющий упорядочивающее сравнение элементов массива.
      * @return индекс элемента с указанным значением или -1, если таковой не был найден.
      */
@@ -428,28 +429,29 @@ public final class IntArray {
                 '}';
     }
 
+    
     private int calculateCapacity(int length) {
         return length + (length >>> 1);
     }
 
     private void rangeCheck(int fromIndex, int toIndex) {
-        if(fromIndex < 0 || toIndex >= length || fromIndex > toIndex)
-            throw new IndexOutOfBoundsException("fromIndex = " + fromIndex + " | toIndex = " + toIndex);
+        if(fromIndex < 0 || toIndex > length || fromIndex > toIndex)
+            throw new ArrayIndexOutOfBoundsException("fromIndex = " + fromIndex + " | toIndex = " + toIndex);
     }
 
     private void halfOpenIntervalCheck(int index) {
         if(index < 0 || index >= length) {
-            throw new IndexOutOfBoundsException(
-                    "Для параметра index=" + index + " не соблюдается условие: " +
-                            "index >= 0 && index < length, где length=" + length);
+            throw new ArrayIndexOutOfBoundsException(
+                    "Для параметра index не соблюдается условие: " +
+                            "index >= 0 && index < length, где length=" + length + ", index=" + index);
         }
     }
 
     private void closedIntervalCheck(int index) {
         if(index < 0 || index > length) {
-            throw new IndexOutOfBoundsException(
-                    "Для параметра index=" + index + " не соблюдается условие: " +
-                            "index >= 0 && index <= length, где length=" + length);
+            throw new ArrayIndexOutOfBoundsException(
+                    "Для параметра index не соблюдается условие: " +
+                            "index >= 0 && index <= length, где length=" + length + ", index=" + index);
         }
     }
 

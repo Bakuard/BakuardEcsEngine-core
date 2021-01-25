@@ -513,8 +513,7 @@ public final class EntityComponentManager {
 
         buffer.invalid();
 
-        LIVE_ENTITIES.expandTo(buffer.USED_ENTITIES_ID.getSize());
-        LIVE_ENTITIES.or(buffer.USED_ENTITIES_ID, LIVE_ENTITIES);
+        LIVE_ENTITIES.or(buffer.USED_ENTITIES_ID);
 
         for(int i = 0; i < buffer.ENTITIES_BY_ID.getLength(); i++) {
             Entity entity = buffer.ENTITIES_BY_ID.get(i);
@@ -593,8 +592,7 @@ public final class EntityComponentManager {
                     handler.handle(e);
                 } catch(BatchException batchException) {
                     synchronized(this) {
-                        mask.expandTo(AVAILABLE_ENTITIES_ID.getSize());
-                        AVAILABLE_ENTITIES_ID.and(mask.not(), AVAILABLE_ENTITIES_ID);
+                        AVAILABLE_ENTITIES_ID.and(mask.expandTo(AVAILABLE_ENTITIES_ID.getSize()).not());
                     }
                     throw batchException;
                 }

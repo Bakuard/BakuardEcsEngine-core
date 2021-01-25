@@ -7,7 +7,7 @@ import java.util.function.Consumer;
  * Реализация динамического массива с несколькими дополнительными методами.
  * @param <T> тип объектов хранимых в массиве.
  */
-public final class Array<T> {
+public final class Array<T> implements Iterable<T> {
 
     private T[] values;
     private int length;
@@ -15,7 +15,7 @@ public final class Array<T> {
     private final int MIN_CAPACITY = 10;
 
     /**
-     * Создвет массив объектов указанной длины.
+     * Создвет пустой массив объектов указанной длины.
      * @param type тип объектов хранимых в массиве.
      * @param length длина массива.
      * @throws IllegalArgumentException если указанная длина меньше нуля.
@@ -30,10 +30,10 @@ public final class Array<T> {
     }
 
     /**
-     * Возвращает объект хранящийся в ячейке с указаным индексом.
+     * Возвращает элемент хранящийся в ячейке с указаным индексом.
      * @param index индекс ячейки массива.
-     * @return объект хранящийся в ячейке с указаным индексом.
-     * @throws IndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
+     * @return элемент хранящийся в ячейке с указаным индексом.
+     * @throws ArrayIndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
      */
     public T get(int index) {
         halfOpenIntervalCheck(index);
@@ -45,7 +45,7 @@ public final class Array<T> {
      * ячейке до вызова этого метода. При вызове данного метода длина массива не изменяется.
      * @param index индекс ячейки массива куда будет записан элемент.
      * @param value добавляемое значение.
-     * @throws IndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
+     * @throws ArrayIndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
      * @return элемент, который находился в массиве под указанным индексом до вызова этого метода.
      */
     public T set(int index, T value) {
@@ -106,7 +106,7 @@ public final class Array<T> {
 
     /**
      * Добавляет все переданные элементы в конец массива увеличевая его длину на кол-во переданных элементов.
-     * Порядок в котором элементы передаются методу сохраняется
+     * Порядок в котором элементы передаются методу сохраняется.
      * @param values добавляемые элементы.
      */
     public void addAll(Array<T> values) {
@@ -124,7 +124,7 @@ public final class Array<T> {
      * позиции и все элементы следующие за ним сдвигаются вверх на одну позицию.
      * @param index позиция, в которую будет добавлен элемент
      * @param value добавляемое значение
-     * @throws IndexOutOfBoundsException если не соблюдается условие index >= 0 && index <= length
+     * @throws ArrayIndexOutOfBoundsException если не соблюдается условие index >= 0 && index <= length
      */
     public void insert(int index, T value) {
         closedIntervalCheck(index);
@@ -141,7 +141,7 @@ public final class Array<T> {
 
     /**
      * Добавляет указанный элемент в массив сохраняя заданный порядок элементов и возвращает индекс
-     * вставки добавляемого элемента. Если массив содержит есколько элементов с тем же значением, что и добавляемый
+     * вставки добавляемого элемента. Если массив содержит несколько элементов с тем же значением, что и добавляемый
      * элемент - метод не дает гарантий, куда будет вставлен элемент оносительно элементов с тем же значением.
      * Выполняет вставку элемента с использованием двоичного поиска.
      * Данный метод требует, чтобы массив был предварительно отсортирован и для сравнения использовался
@@ -181,7 +181,7 @@ public final class Array<T> {
      * используйте метод {@link #compressTo(int)}.
      * @param index индекс удаляемого элемента.
      * @return удаляемый элемент под указанным индексом.
-     * @throws IndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
+     * @throws ArrayIndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
      */
     public T quickRemove(int index) {
         halfOpenIntervalCheck(index);
@@ -202,7 +202,7 @@ public final class Array<T> {
      * используйте метод {@link #compressTo(int)}.
      * @param index индекс удаляемого элемента.
      * @return удаляемый элемент под указанным индексом.
-     * @throws IndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
+     * @throws ArrayIndexOutOfBoundsException если не соблюдается условие index >= 0 && index < length
      */
     public T orderedRemove(int index) {
         halfOpenIntervalCheck(index);
@@ -259,13 +259,14 @@ public final class Array<T> {
 
     /**
      * Возвращает индекс первого(с начала интервала) встретевшегося элемента с указанным значением или -1,
-     * если массив в указанном диапозоне не содержит элемент с заданным значением. Выполняет линейный поиск.
+     * если массив в указанном диапозоне не содержит элемент с заданным значением. Выполняет линейный поиск
+     * начиная с элемента под индексом fromIndex(включая) и до элемента с индексом toIndex(исключая).
      * Если fromIndex == toIndex, метод возвращает -1.
      * @param value значение элеменета, для которого осуществляется поиск.
      * @param fromIndex индекс первого элемента с которого начнется поиск (включая).
      * @param toIndex индекс элемента, до которого ведется поиск (исключая).
      * @return индекс первого(с начала интервала) встретевшегося элемента с указанным значением.
-     * @throws IndexOutOfBoundsException если fromIndex < 0 || toIndex >= length || fromIndex > toIndex
+     * @throws ArrayIndexOutOfBoundsException если fromIndex < 0 || toIndex > length || fromIndex > toIndex
      */
     public int linearSearch(T value, int fromIndex, int toIndex) {
         rangeCheck(fromIndex, toIndex);
@@ -280,7 +281,7 @@ public final class Array<T> {
      * Данный метод требует, чтобы массив был предварительно отсортирован и для сравнения использовался
      * Comparator задающий тот же линейный порядок, что и порядок отсортированного массива. Если это условие
      * не соблюдается - результ не определен.
-     * @param value значение элеменета, для которого осуществляется поиск.
+     * @param value значение элемента, для которого осуществляется поиск.
      * @param comparator объект выполняющий упорядочивающее сравнение элементов массива.
      * @return индекс элемента с указанным значением или -1, если таковой не был найден.
      */
@@ -344,7 +345,8 @@ public final class Array<T> {
      * хранящегося в массиве. Порядок перебора элементов соответсвует порядку их следования в массиве.
      * @param action действие выполняемое для каждого элемента хранящегося в данном массиве.
      */
-    public void forEach(Consumer<T> action) {
+    @Override
+    public void forEach(Consumer<? super T> action) {
         final int EXPECTED_COUNT_MOD = actualModCount;
 
         for(int i = 0; i < length; i++) {
@@ -362,6 +364,7 @@ public final class Array<T> {
      * порядку элементов в массиве.
      * @return итератор для одностороннего перебора элементов данного массива.
      */
+    @Override
     public Iterator<T> iterator() {
 
         return new Iterator<>() {
@@ -431,23 +434,23 @@ public final class Array<T> {
     }
 
     private void rangeCheck(int fromIndex, int toIndex) {
-        if(fromIndex < 0 || toIndex >= length || fromIndex > toIndex)
-            throw new IndexOutOfBoundsException("fromIndex = " + fromIndex + " | toIndex = " + toIndex);
+        if(fromIndex < 0 || toIndex > length || fromIndex > toIndex)
+            throw new ArrayIndexOutOfBoundsException("fromIndex = " + fromIndex + " | toIndex = " + toIndex);
     }
 
     private void halfOpenIntervalCheck(int index) {
         if(index < 0 || index >= length) {
-            throw new IndexOutOfBoundsException(
-                    "Для параметра index=" + index + " не соблюдается условие: " +
-                            "index >= 0 && index < length, где length=" + length);
+            throw new ArrayIndexOutOfBoundsException(
+                    "Для параметра index не соблюдается условие: " +
+                            "index >= 0 && index < length, где length=" + length + ", index=" + index);
         }
     }
 
     private void closedIntervalCheck(int index) {
         if(index < 0 || index > length) {
-            throw new IndexOutOfBoundsException(
-                    "Для параметра index=" + index + " не соблюдается условие: " +
-                            "index >= 0 && index <= length, где length=" + length);
+            throw new ArrayIndexOutOfBoundsException(
+                    "Для параметра index не соблюдается условие: " +
+                            "index >= 0 && index <= length, где length=" + length + ", index=" + index);
         }
     }
 
@@ -487,7 +490,7 @@ public final class Array<T> {
 
 
     /**
-     * Назначение данного интеофейса сходно назначению интерфейса Comparator из стандартной бибилиотеки java.
+     * Назначение данного интерфейса сходно назначению интерфейса Comparator из стандартной бибилиотеки java.
      * Отличие - данный интерфейс используется для бинарного поиска в тех случаях, когда необходимо осущестить
      * бинарный поиск по некоторому одному или нескольким полям объекта, по кокторым для типа данного объекта
      * задан линейный порядок. При этом у вызывающего кода есть данные поля в виде самостоятельных объектов

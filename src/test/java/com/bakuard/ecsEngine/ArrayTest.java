@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine;
 
-import com.bakuard.ecsEngine.core.utils.Array;
+import com.bakuard.ecsEngine.core.utils.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -10,170 +10,203 @@ class ArrayTest {
 
     @Test
     public void constructor() {
-        Array<String> array = new Array<>(String.class, 100);
-        for(int i = 0; i < array.getLength(); i++) {
-            Assertions.assertNull(array.get(i));
-        }
-        Assertions.assertEquals(100, array.getLength());
-        Assertions.assertDoesNotThrow(() -> array.set(99, "Cat"));
+        Array<String> array = new Array<>(String.class, 3);
 
-        Assertions.assertThrows(IllegalArgumentException.class, () ->
-                new Array<>(String.class, -1));
+        Assertions.assertNull(array.get(0),
+                "После создания массива не нулевого размера, все его элементы должны иметь значение null.");
+        Assertions.assertNull(array.get(2),
+                "После создания массива не нулевого размера, все его элементы должны иметь значение null.");
 
-        Array<String> array2 = new Array<>(String.class, 0);
-        Assertions.assertEquals(0, array2.getLength());
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array2.set(0, "Cat"));
+        Assertions.assertEquals(3, array.getLength(),
+                "После создания массива не нулевого размера, метод getLength() должен возвращать значение, " +
+                        "равное значению переданному в качестве аргумента конструктора.");
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new Array<>(String.class, -1),
+                "При попытке создать массив с отрицательной длиной должно генерироваться исключение.");
+
+        Array<String> emptyArray = new Array<>(String.class, 0);
+        Assertions.assertEquals(0, emptyArray.getLength(),
+                "После создании массива с нулевой длиной метрод getLength() должен возвращать 0.");
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> emptyArray.get(0),
+                "При попытке получить доступ к элементам пустого массива должно генерироваться исключение " +
+                        "в независимости от переданного индекса.");
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> emptyArray.get(1000000),
+                "При попытке получить доступ к элементам пустого массива должно генерироваться исключение " +
+                        "в независимости от переданного индекса.");
     }
 
     @Test
     public void get() {
-        Array<String> array = new Array<>(String.class, 10);
+        Array<String> emptyArray = new Array<>(String.class, 0);
+        Array<String> array = new Array<>(String.class, 0);
+        array.addAll("cat", "dog", "ping");
 
-        Assertions.assertNull(array.get(0));
-        array.set(0, "Cat");
-        Assertions.assertEquals("Cat", array.get(0));
-        array.set(0, null);
-        Assertions.assertNull(array.get(0));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.get(-1),
+                "При попыте получить значение за нижней границей массива должно генерироваться исключение.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.get(3),
+                "При попыте получить значение за верхней границей массива должно генерироваться исключение.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> emptyArray.get(0),
+                "При попытке получить доступ к элементам пустого массива должно генерироваться исключение " +
+                        "в независимости от переданного индекса.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> emptyArray.get(1000000),
+                "При попытке получить доступ к элементам пустого массива должно генерироваться исключение " +
+                        "в независимости от переданного индекса.");
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.get(-1));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.get(10));
+        Assertions.assertEquals("cat", array.get(0));
+        Assertions.assertEquals("ping", array.get(2));
     }
 
     @Test
     public void set() {
-        Array<String> array = new Array<>(String.class, 10);
+        Array<String> array = new Array<>(String.class, 0);
+        array.addAll(null, "ping", "dog");
 
-        Assertions.assertNull(array.set(7, "Cat"));
-        Assertions.assertEquals("Cat", array.get(7));
+        Assertions.assertNull(array.set(0, "cat"),
+                "Метод set(int index, T value) должен возвращать элемент хранящийся до его вызова " +
+                        "в ячейке с указанным индексом. Для пустой ячейки должно возвращаться значение null.");
+        Assertions.assertEquals("cat", array.get(0));
+        Assertions.assertEquals("dog", array.set(2, "crocodile"),
+                "Метод set(int index, T value) должен возвращать элемент хранящийся до его вызова " +
+                        "в ячейке с указанным индексом.");
+        Assertions.assertEquals("crocodile", array.get(2));
+        Assertions.assertEquals("crocodile", array.set(2, null),
+                "Метод set(int index, T value) должен позволять записать значение null.");
+        Assertions.assertNull(array.get(2));
 
-        Assertions.assertEquals("Cat", array.set(7, null));
-        Assertions.assertNull(array.get(7));
-
-        Assertions.assertNull(array.set(7, "Dog"));
-        Assertions.assertEquals("Dog", array.get(7));
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.set(-1, "Cat"));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.set(10, "Cat"));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.set(-1, "Cat"),
+                "При попытке записать значение за границами массива с помощью set(int index, T value) " +
+                        "должно генерироваться исключение.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.set(3, "Cat"),
+                "При попытке записать значение за границами массива с помощью set(int index, T value) " +
+                        "должно генерироваться исключение.");
     }
 
     @Test
     public void setAndExpand() {
-        Array<String> array = new Array<>(String.class, 10);
+        Array<String> array = new Array<>(String.class, 0);
+        array.addAll("cat", "dog", "ping");
 
-        Assertions.assertNull(array.setAndExpand(7, "Cat"));
-        Assertions.assertEquals("Cat", array.get(7));
+        Assertions.assertEquals("cat", array.setAndExpand(0, "Java"),
+                "Метод setAndExpand(int index, T value) должен возвращать элемент хранящийся до его вызова " +
+                        "в ячейке с указанным индексом.");
+        Assertions.assertEquals("Java", array.get(0));
 
-        Assertions.assertEquals("Cat", array.setAndExpand(7, null));
-        Assertions.assertNull(array.get(7));
+        Assertions.assertEquals("ping", array.setAndExpand(2, null),
+                "Метод setAndExpand(int index, T value) должен позволять записать значение null.");
+        Assertions.assertNull(array.get(2));
 
-        Assertions.assertNull(array.setAndExpand(7, "Dog"));
-        Assertions.assertEquals("Dog", array.get(7));
+        Assertions.assertNull(array.setAndExpand(5, "C++"),
+                "Если индекс переданый методу setAndExpand(int index, T value) больше длины массива, " +
+                        "то возвращаемое значение метода должно иметь значение null.");
+        Assertions.assertEquals("C++", array.get(5));
+        Assertions.assertNull(array.get(3),
+                "При расширении массива при применении метода setAndExpand(int index, T value), " +
+                        "новые значения между указанным индексом и индексом равным предыдущей длине " +
+                        "массива(включая его), должны быть равны null.");
+        Assertions.assertNull(array.get(4),
+                "При расширении массива при применении метода setAndExpand(int index, T value), " +
+                        "новые значения между указанным индексом и индексом равным предыдущей длине " +
+                        "массива(включая его), должны быть равны null.");
+        Assertions.assertEquals("Java", array.get(0),
+                "При расширении массива при применении метода setAndExpand(int index, T value), " +
+                        "старые значение должны сохраняться.");
+        Assertions.assertEquals("dog", array.get(1),
+                "При расширении массива при применении метода setAndExpand(int index, T value), " +
+                        "старые значение должны сохраняться.");
+        Assertions.assertNull(array.get(2),
+                "При расширении массива при применении метода setAndExpand(int index, T value), " +
+                        "старые значение должны сохраняться.");
 
-        Assertions.assertNull(array.setAndExpand(112, "new Cat"));
-        Assertions.assertEquals("new Cat", array.get(112));
-        for(int i = 10; i < 112; i++)
-            Assertions.assertNull(array.get(i),
-                    "При расширении массива при применении метода putAndExpand, " +
-                            "новые значения между указанным индексом и и инедксом равным предыдущей длине " +
-                            "массива, должны быть равны null.");
-        Assertions.assertEquals("Dog", array.get(7),
-                "При расширении массива при применении метода putAndExpand, " +
-                        "старые занчения должны сохраняться.");
-        Assertions.assertEquals(113, array.getLength());
+        Assertions.assertEquals(6, array.getLength(),
+                "При расширении массива при применении метода setAndExpand(int index, T value), " +
+                        "метод getLength() должен возвращать значение равное переданному индексу + 1.");
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.setAndExpand(-1, "Cat"));
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.setAndExpand(-1, "Cat"),
+                "При вызове метода setAndExpand(int index, T value) с отрицательным индексом должно " +
+                        "генерироваться исключение.");
     }
 
     @Test
     public void add() {
-        Array<String> array = new Array<>(String.class, 10);
+        Array<String> array = new Array<>(String.class, 3);
+        array.set(0, "Java");
+        array.set(1, "Candy");
+        array.set(2, "C");
 
-        for(int i = 0; i < 100; i++) array.add("Cat#" + i);
-        for(int i = 0; i < 10; i++) Assertions.assertNull(array.get(i));
-        for(int i = 10; i < array.getLength(); i++)
-            Assertions.assertEquals("Cat#" + (i - 10), array.get(i));
-        Assertions.assertEquals(110, array.getLength());
+        array.add("cat");
 
-        Array<String> array2 = new Array<>(String.class, 0);
-        for(int i = 0; i < 10; i++) array2.add("Cat#" + i);
-        Assertions.assertEquals(10, array2.getLength());
+        Assertions.assertEquals(4, array.getLength(),
+                "Метод add(T value) должен увеличевать размер массива на единицу.");
+        Assertions.assertEquals("cat", array.get(3));
+        Assertions.assertEquals("Java", array.get(0),
+                "После расширения массива в результате применения метода add(T value), элементы массива " +
+                        "под индексами [0, oldLength) должны сохраниться.");
+        Assertions.assertEquals("C", array.get(2),
+                "После расширения массива в результате применения метода add(T value), элементы массива " +
+                        "под индексами [0, oldLength) должны сохраниться.");
     }
 
     @Test
     public void addAll() {
-        Array<Integer> array = new Array<>(Integer.class, 0);
-        array.addAll(1,2,3,4,5,6);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 6);
-        pattern2.set(0, 1);
-        pattern2.set(1, 2);
-        pattern2.set(2, 3);
-        pattern2.set(3, 4);
-        pattern2.set(4, 5);
-        pattern2.set(5, 6);
-        Assertions.assertEquals(pattern2, array,
+        Array<Integer> actualArray = new Array<>(Integer.class, 0);
+        actualArray.addAll(1,2,3);
+        Array<Integer> expectedArray = new Array<>(Integer.class, 3);
+        expectedArray.set(0, 1);
+        expectedArray.set(1, 2);
+        expectedArray.set(2, 3);
+        Assertions.assertEquals(expectedArray, actualArray,
                 "Не верно работает метод addAll() при добавлении элементов в пустой массив.");
 
-        array.addAll(10,20,30,40,50);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 11);
-        pattern3.set(0, 1);
-        pattern3.set(1, 2);
-        pattern3.set(2, 3);
-        pattern3.set(3, 4);
-        pattern3.set(4, 5);
-        pattern3.set(5, 6);
-        pattern3.set(6, 10);
-        pattern3.set(7, 20);
-        pattern3.set(8, 30);
-        pattern3.set(9, 40);
-        pattern3.set(10, 50);
-        Assertions.assertEquals(pattern3, array,
+        actualArray.addAll(10,20,30);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 6);
+        expectedArray2.set(0, 1);
+        expectedArray2.set(1, 2);
+        expectedArray2.set(2, 3);
+        expectedArray2.set(3, 10);
+        expectedArray2.set(4, 20);
+        expectedArray2.set(5, 30);
+        Assertions.assertEquals(expectedArray2, actualArray,
                 "Не верно работает метод addAll() при добавлении элементов в не пустой массив.");
 
-        array.addAll(1000);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 12);
-        pattern4.set(0, 1);
-        pattern4.set(1, 2);
-        pattern4.set(2, 3);
-        pattern4.set(3, 4);
-        pattern4.set(4, 5);
-        pattern4.set(5, 6);
-        pattern4.set(6, 10);
-        pattern4.set(7, 20);
-        pattern4.set(8, 30);
-        pattern4.set(9, 40);
-        pattern4.set(10, 50);
-        pattern4.set(11, 1000);
-        Assertions.assertEquals(pattern4, array,
+        actualArray.addAll(1000);
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 7);
+        expectedArray3.set(0, 1);
+        expectedArray3.set(1, 2);
+        expectedArray3.set(2, 3);
+        expectedArray3.set(3, 10);
+        expectedArray3.set(4, 20);
+        expectedArray3.set(5, 30);
+        expectedArray3.set(6, 1000);
+        Assertions.assertEquals(expectedArray3, actualArray,
                 "Не верно работает метод addAll() при попытке добавить через него один элемент.");
 
-        array.addAll();
-        Integer[] emptyArray = new Integer[0];
-        array.addAll(emptyArray);
-        Assertions.assertEquals(pattern4, array,
+        actualArray.addAll();
+        actualArray.addAll(new Integer[0]);
+        Assertions.assertEquals(expectedArray3, actualArray,
                 "Метод addAll() при вызове без аргументов или с пустым массивом не должен оказывать\n " +
                         "никакого эффекта.");
 
         Array<Integer> array2 = new Array<>(Integer.class, 0);
         array2.addAll(1000);
-        Array<Integer> pattern5 = new Array<>(Integer.class, 1);
-        pattern5.set(0, 1000);
-        Assertions.assertEquals(pattern5, array2,
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 1);
+        expectedArray4.set(0, 1000);
+        Assertions.assertEquals(expectedArray4, array2,
                 "Не верно работает метод addAll() при попытке добавить через него один элемент\n " +
                         "в пустой массив.");
 
         Array<Integer> array3 = new Array<>(Integer.class, 0);
         array3.addAll(null, 1,2,3,null,4,5,6,null);
-        Array<Integer> pattern6 = new Array<>(Integer.class, 9);
-        pattern6.set(0, null);
-        pattern6.set(1, 1);
-        pattern6.set(2, 2);
-        pattern6.set(3, 3);
-        pattern6.set(4, null);
-        pattern6.set(5, 4);
-        pattern6.set(6, 5);
-        pattern6.set(7, 6);
-        pattern6.set(8, null);
-        Assertions.assertEquals(pattern6, array3,
+        Array<Integer> expectedArray5 = new Array<>(Integer.class, 9);
+        expectedArray5.set(0, null);
+        expectedArray5.set(1, 1);
+        expectedArray5.set(2, 2);
+        expectedArray5.set(3, 3);
+        expectedArray5.set(4, null);
+        expectedArray5.set(5, 4);
+        expectedArray5.set(6, 5);
+        expectedArray5.set(7, 6);
+        expectedArray5.set(8, null);
+        Assertions.assertEquals(expectedArray5, array3,
                 "Не верно работает метод addAll() при попытке добавить null элементы");
     }
 
@@ -183,9 +216,9 @@ class ArrayTest {
         Array<Integer> from = new Array<>(Integer.class, 0);
         from.addAll(1,2,3,4,5,6,7,8,9,10);
         to.addAll(from);
-        Array<Integer> pattern1 = new Array<>(Integer.class, 0);
-        pattern1.addAll(1,2,3,4,5,6,7,8,9,10);
-        Assertions.assertEquals(pattern1, to,
+        Array<Integer> expectedArray = new Array<>(Integer.class, 0);
+        expectedArray.addAll(1,2,3,4,5,6,7,8,9,10);
+        Assertions.assertEquals(expectedArray, to,
                 "Не верно работает метод addAll(Array) при добавлении элементов в пустой массив.");
 
         Array<Integer> to2 = new Array<>(Integer.class, 0);
@@ -193,9 +226,9 @@ class ArrayTest {
         Array<Integer> from2 = new Array<>(Integer.class, 0);
         from2.addAll(11,12,13,14,15,16,17);
         to2.addAll(from2);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 0);
-        pattern2.addAll(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17);
-        Assertions.assertEquals(pattern2, to2,
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 0);
+        expectedArray2.addAll(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17);
+        Assertions.assertEquals(expectedArray2, to2,
                 "Не верно работает метод addAll(Array) при добавлении элементов в не пустой массив.");
 
         Array<Integer> to3 = new Array<>(Integer.class, 0);
@@ -203,18 +236,19 @@ class ArrayTest {
         Array<Integer> from3 = new Array<>(Integer.class, 1);
         from3.set(0, 1000);
         to3.addAll(from3);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 0);
-        pattern3.addAll(1,2,3,4,5,6,7,8,9,10,1000);
-        Assertions.assertEquals(pattern3, to3,
-                "Не верно работает метод addAll(Array) при попытке добавить через него один элемент.");
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 0);
+        expectedArray3.addAll(1,2,3,4,5,6,7,8,9,10,1000);
+        Assertions.assertEquals(expectedArray3, to3,
+                "Не верно работает метод addAll(Array) при попытке добавить через него массив с " +
+                        "одним элементом.");
 
         Array<Integer> to4 = new Array<>(Integer.class, 0);
         to4.addAll(1,2,3,4,5,6,7,8,9,10);
         Array<Integer> from4 = new Array<>(Integer.class, 0);
         to4.addAll(from4);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 0);
-        pattern4.addAll(1,2,3,4,5,6,7,8,9,10);
-        Assertions.assertEquals(pattern4, to4,
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 0);
+        expectedArray4.addAll(1,2,3,4,5,6,7,8,9,10);
+        Assertions.assertEquals(expectedArray4, to4,
                 "Метод addAll(Array) при вызове с пустым массивом в качестве аргумента " +
                         "не должен оказывать никакого эффекта.");
 
@@ -222,9 +256,9 @@ class ArrayTest {
         Array<Integer> from5 = new Array<>(Integer.class, 1);
         from5.set(0, 1000);
         to5.addAll(from5);
-        Array<Integer> pattern5 = new Array<>(Integer.class, 1);
-        pattern5.set(0, 1000);
-        Assertions.assertEquals(pattern5, to5,
+        Array<Integer> expectedArray5 = new Array<>(Integer.class, 1);
+        expectedArray5.set(0, 1000);
+        Assertions.assertEquals(expectedArray5, to5,
                 "Не верно работает метод addAll(Array) при попытке добавить через него один элемент\n " +
                         "в пустой массив.");
 
@@ -233,62 +267,68 @@ class ArrayTest {
         Array<Integer> from6 = new Array<>(Integer.class, 0);
         from6.addAll(11,null,12,null,13,null,null);
         to6.addAll(from6);
-        Array<Integer> pattern6 = new Array<>(Integer.class, 0);
-        pattern6.addAll(1,2,3,4,5,6,7,8,9,10,11,null,12,null,13,null,null);
-        Assertions.assertEquals(pattern6, to6,
+        Array<Integer> expectedArray6 = new Array<>(Integer.class, 0);
+        expectedArray6.addAll(1,2,3,4,5,6,7,8,9,10,11,null,12,null,13,null,null);
+        Assertions.assertEquals(expectedArray6, to6,
                 "Не верно работает метод addAll(Array) если передаваемый массив содержит null элементы.");
     }
 
     @Test
     public void insert() {
+        Array<Integer> emptyArray = new Array<>(Integer.class, 0);
+
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> emptyArray.insert(-1, 10),
+                "Метод insert(T value, int index) должен проверять параметр index на\n " +
+                        "принадлженость границам массива.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> emptyArray.insert(1, 10),
+                "Метод insert(T value, int index) должен проверять параметр index на\n " +
+                        "принадлженость границам массива.");
+
+        emptyArray.insert(0, 10);
+        Assertions.assertEquals(10, emptyArray.get(0));
+
         Array<Integer> array = new Array<>(Integer.class, 0);
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.insert(-1, 10),
-                "Метод add(T value, int index) должен проверять параметр index на\n " +
-                        "принадлженость диапозону.");
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.insert(1, 10),
-                "Метод add(T value, int index) должен проверять параметр index на\n " +
-                        "принадлженость диапозону.");
-        array.insert(0, 10);
-        Assertions.assertEquals(10, array.get(0),
-                "После вызова метода Метод add(T value, int index), метод get() должен\n " +
-                        "возвращать по индексу переданному методу add(T value, int index) значение,\n " +
-                        "которое было передан этому методу.");
-
         array.addAll(20, 30, 40, null, 60, 70);
         array.insert(0, 0);
-        Array<Integer> pattern = new Array<>(Integer.class, 0);
-        pattern.addAll(0, 10, 20, 30, 40, null, 60, 70);
-        Assertions.assertEquals(pattern, array,
-                "Метод add(T value, int index) при добавлении элемента в начало массива должен\n " +
-                        "сдвигать все элементы вверх с сохранением их взаимного расположения и увеличить\n " +
-                        "длину массива на единицу.");
+        Array<Integer> expectedArray = new Array<>(Integer.class, 0);
+        expectedArray.addAll(0, 20, 30, 40, null, 60, 70);
+        Assertions.assertEquals(expectedArray, array,
+                "Метод insert(T value, int index) при добавлении элемента в начало массива должен\n " +
+                        "сдвигать все элементы вверх с сохранением их взаимного расположения.");
 
-        array.insert(array.getLength(), null);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 0);
-        pattern2.addAll(0, 10, 20, 30, 40, null, 60, 70, null);
-        Assertions.assertEquals(pattern2, array,
-                "Метод add(T value, int index) при добавлении элемента в конец массива.");
+        Assertions.assertEquals(7, array.getLength(),
+                "Метод insert(T value, int index) должен увеличеть длину массива на единицу.");
+
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(20, 30, 40, null, 60, 70);
+        array2.insert(6, null);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 0);
+        expectedArray2.addAll(20, 30, 40, null, 60, 70, null);
+        Assertions.assertNull(array2.get(6),
+                "Метод insert(T value, int index) должен позволять добавлять значение null.");
+        Assertions.assertEquals(expectedArray2, array2,
+                "Метод insert(T value, int index) при добавлении элемента в конец массива " +
+                        "должен оставлять предыдущие элементы на своих местах.");
     }
 
     @Test
     public void binaryInsert_ArrayIsEmptyOrContainsOneItem() {
         Array<Integer> emptyArray = new Array<>(Integer.class, 0);
-        Array<Integer> pattern = new Array<>(Integer.class, 1);
-        pattern.set(0, 100);
+        Array<Integer> expectedArray = new Array<>(Integer.class, 1);
+        expectedArray.set(0, 100);
         int insertIndex = emptyArray.binaryInsert(100, Integer::compare);
-        Assertions.assertEquals(pattern, emptyArray,
+        Assertions.assertEquals(expectedArray, emptyArray,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив пуст.");
         Assertions.assertEquals(0, insertIndex,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив пуст.");
 
         Array<Integer> arrayWithOneItem = new Array<>(Integer.class, 1);
         arrayWithOneItem.set(0, 100);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 2);
-        pattern2.set(0, 10);
-        pattern2.set(1, 100);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 2);
+        expectedArray2.set(0, 10);
+        expectedArray2.set(1, 100);
         insertIndex = arrayWithOneItem.binaryInsert(10, Integer::compare);
-        Assertions.assertEquals(pattern2, arrayWithOneItem,
+        Assertions.assertEquals(expectedArray2, arrayWithOneItem,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
                         "элемент и добавляемый элемент меньше его.");
         Assertions.assertEquals(0, insertIndex,
@@ -297,11 +337,11 @@ class ArrayTest {
 
         Array<Integer> arrayWithOneItem2 = new Array<>(Integer.class, 1);
         arrayWithOneItem2.set(0, 100);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 2);
-        pattern3.set(0, 100);
-        pattern3.set(1, 1000);
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 2);
+        expectedArray3.set(0, 100);
+        expectedArray3.set(1, 1000);
         insertIndex = arrayWithOneItem2.binaryInsert(1000, Integer::compare);
-        Assertions.assertEquals(pattern3, arrayWithOneItem2,
+        Assertions.assertEquals(expectedArray3, arrayWithOneItem2,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
                         "элемент и добавляемый элемент больше его.");
         Assertions.assertEquals(1, insertIndex ,
@@ -310,11 +350,11 @@ class ArrayTest {
 
         Array<Integer> arrayWithOneItem3 = new Array<>(Integer.class, 1);
         arrayWithOneItem3.set(0, 100);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 2);
-        pattern4.set(0, 100);
-        pattern4.set(1, 100);
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 2);
+        expectedArray4.set(0, 100);
+        expectedArray4.set(1, 100);
         insertIndex = arrayWithOneItem3.binaryInsert(100, Integer::compare);
-        Assertions.assertEquals(pattern4, arrayWithOneItem3,
+        Assertions.assertEquals(expectedArray4, arrayWithOneItem3,
                 "Не верно работает метод binaryInsert в случае, когда исходный массив имеет один\n " +
                         "элемент и добавляемый элемент равен ему.");
         Assertions.assertTrue(insertIndex == 0 || insertIndex == 1,
@@ -326,10 +366,10 @@ class ArrayTest {
     public void binaryInsert_ArrayContainsTwoItem() {
         Array<Integer> array = new Array<>(Integer.class, 0);
         array.addAll(10, 100);
-        Array<Integer> pattern = new Array<>(Integer.class, 0);
-        pattern.addAll(2, 10, 100);
+        Array<Integer> expectedArray = new Array<>(Integer.class, 0);
+        expectedArray.addAll(2, 10, 100);
         int insertIndex = array.binaryInsert(2, Integer::compare);
-        Assertions.assertEquals(pattern , array,
+        Assertions.assertEquals(expectedArray , array,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент меньше наименьшего.");
         Assertions.assertEquals(0, insertIndex,
@@ -338,10 +378,10 @@ class ArrayTest {
 
         Array<Integer> array2 = new Array<>(Integer.class, 0);
         array2.addAll(10, 100);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 0);
-        pattern2.addAll(10, 60, 100);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 0);
+        expectedArray2.addAll(10, 60, 100);
         insertIndex = array2.binaryInsert(60, Integer::compare);
-        Assertions.assertEquals(pattern2 , array2,
+        Assertions.assertEquals(expectedArray2 , array2,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент должен встать посередине.");
         Assertions.assertEquals(1, insertIndex,
@@ -350,10 +390,10 @@ class ArrayTest {
 
         Array<Integer> array3 = new Array<>(Integer.class, 0);
         array3.addAll(10, 100);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 0);
-        pattern3.addAll(10, 100, 500);
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 0);
+        expectedArray3.addAll(10, 100, 500);
         insertIndex = array3.binaryInsert(500, Integer::compare);
-        Assertions.assertEquals(pattern3 , array3,
+        Assertions.assertEquals(expectedArray3 , array3,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент больше наибольшего в массиве.");
         Assertions.assertEquals(2, insertIndex,
@@ -362,10 +402,10 @@ class ArrayTest {
 
         Array<Integer> array4 = new Array<>(Integer.class, 0);
         array4.addAll(10, 100);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 0);
-        pattern4.addAll(10, 10, 100);
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 0);
+        expectedArray4.addAll(10, 10, 100);
         insertIndex = array4.binaryInsert(10, Integer::compare);
-        Assertions.assertEquals(pattern4, array4,
+        Assertions.assertEquals(expectedArray4, array4,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                 "порядок возрастающий, добавляемый элемент уже присутсвует в начале массива один раз.");
         Assertions.assertTrue(insertIndex == 0 || insertIndex == 1,
@@ -374,10 +414,10 @@ class ArrayTest {
 
         Array<Integer> array5 = new Array<>(Integer.class, 0);
         array5.addAll(10, 100);
-        Array<Integer> pattern5 = new Array<>(Integer.class, 0);
-        pattern5.addAll(10, 100, 100);
+        Array<Integer> expectedArray5 = new Array<>(Integer.class, 0);
+        expectedArray5.addAll(10, 100, 100);
         insertIndex = array5.binaryInsert(100, Integer::compare);
-        Assertions.assertEquals(pattern5, array5,
+        Assertions.assertEquals(expectedArray5, array5,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, добавляемый элемент уже присутсвует в конце массива один раз.");
         Assertions.assertTrue(insertIndex == 1 ||insertIndex == 2,
@@ -386,10 +426,10 @@ class ArrayTest {
 
         Array<Integer> array6 = new Array<>(Integer.class, 0);
         array6.addAll(10, 10);
-        Array<Integer> pattern6 = new Array<>(Integer.class, 0);
-        pattern6.addAll(10, 10, 10);
+        Array<Integer> expectedArray6 = new Array<>(Integer.class, 0);
+        expectedArray6.addAll(10, 10, 10);
         insertIndex = array6.binaryInsert(10, Integer::compare);
-        Assertions.assertEquals(pattern6, array6,
+        Assertions.assertEquals(expectedArray6, array6,
                 "Не верно работает метод binaryInsert(), когда кол-во элементов массива равно двум,\n " +
                         "порядок возрастающий, все элемнты массива одинаковы и добавляемый элемент присутсвует.");
         Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 2,
@@ -399,12 +439,12 @@ class ArrayTest {
 
     @Test
     public void binaryInsert_NumberOfItemsIsEvenAndMoreThenTwo() {
-        Array<Integer> array = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array.getLength(); i++) array.set(i, i * 10);
-        Array<Integer> pattern = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern.getLength(); i++) pattern.set(i, (i - 1) * 10);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(1,2,3,4,5,6,7,8);
+        Array<Integer> expectedArray = new Array<>(Integer.class, 0);
+        expectedArray.addAll(-10,1,2,3,4,5,6,7,8);
         int insertIndex = array.binaryInsert(-10, Integer::compare);
-        Assertions.assertEquals(pattern, array,
+        Assertions.assertEquals(expectedArray, array,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и меньше наименьшего элемента в массиве.");
@@ -413,42 +453,40 @@ class ArrayTest {
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и меньше наименьшего элемента в массиве.");
 
-        Array<Integer> array2 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array2.getLength(); i++) array2.set(i, i * 10);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern2.getLength(); i++) pattern2.set(i, i * 10);
-        pattern2.insert(556, 5557);
-        insertIndex = array2.binaryInsert(5557, Integer::compare);
-        Assertions.assertEquals(pattern2, array2,
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(1,2,3,4,6,7,8,9);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 0);
+        expectedArray2.addAll(1,2,3,4,5,6,7,8,9);
+        insertIndex = array2.binaryInsert(5, Integer::compare);
+        Assertions.assertEquals(expectedArray2, array2,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и должен быть добавлен где-то в средину массива.");
-        Assertions.assertEquals(556, insertIndex,
+        Assertions.assertEquals(4, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и должен быть добавлен где-то в средину массива.");
 
-        Array<Integer> array3 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array3.getLength(); i++) array3.set(i, i * 10);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern3.getLength(); i++) pattern3.set(i, i * 10);
-        insertIndex = array3.binaryInsert(10000, Integer::compare);
-        Assertions.assertEquals(pattern3, array3,
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(1,2,3,4,5,6,7,8);
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 0);
+        expectedArray3.addAll(1,2,3,4,5,6,7,8,9);
+        insertIndex = array3.binaryInsert(9, Integer::compare);
+        Assertions.assertEquals(expectedArray3, array3,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и больше наибольшего элемента в массиве.");
-        Assertions.assertEquals(1000, insertIndex,
+        Assertions.assertEquals(8, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и больше наибольшего элемента в массиве.");
 
-        Array<Integer> array4 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array4.getLength(); i++) array4.set(i, i * 10);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern4.getLength(); i++) pattern4.set(i, i * 10);
-        pattern4.insert(0, 0);
-        insertIndex = array4.binaryInsert(0, Integer::compare);
-        Assertions.assertEquals(pattern4, array4,
+        Array<Integer> array4 = new Array<>(Integer.class, 0);
+        array4.addAll(1,2,3,4,5,6,7,8);
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 0);
+        expectedArray4.addAll(1,1,2,3,4,5,6,7,8);
+        insertIndex = array4.binaryInsert(1, Integer::compare);
+        Assertions.assertEquals(expectedArray4, array4,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в начале массива.");
@@ -457,109 +495,86 @@ class ArrayTest {
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в начале массива.");
 
-        Array<Integer> array5 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array5.getLength(); i++) array5.set(i, i * 10);
-        Array<Integer> pattern5 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern5.getLength(); i++) pattern5.set(i, i * 10);
-        pattern5.insert(556, 5557);
-        insertIndex = array5.binaryInsert(5557, Integer::compare);
-        Assertions.assertEquals(pattern5, array5,
+        Array<Integer> array5 = new Array<>(Integer.class, 0);
+        array5.addAll(1,2,3,4,5,6,7,8);
+        Array<Integer> expectedArray5 = new Array<>(Integer.class, 0);
+        expectedArray5.addAll(1,2,3,4,5,5,6,7,8);
+        insertIndex = array5.binaryInsert(5, Integer::compare);
+        Assertions.assertEquals(expectedArray5, array5,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится где-то в середине массива.");
-        Assertions.assertTrue(insertIndex == 556 || insertIndex == 557,
+        Assertions.assertTrue(insertIndex == 4 || insertIndex == 5,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится где-то в середине массива.");
 
-        Array<Integer> array6 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array6.getLength(); i++) array6.set(i, i * 10);
-        Array<Integer> pattern6 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern6.getLength(); i++) pattern6.set(i, i * 10);
-        pattern6.insert(1000, 9990);
-        insertIndex = array6.binaryInsert(9990, Integer::compare);
-        Assertions.assertEquals(pattern6, array6,
+        Array<Integer> array6 = new Array<>(Integer.class, 0);
+        array6.addAll(1,2,3,4,5,6,7,8);
+        Array<Integer> expectedArray6 = new Array<>(Integer.class, 0);
+        expectedArray6.addAll(1,2,3,4,5,6,7,8,8);
+        insertIndex = array6.binaryInsert(8, Integer::compare);
+        Assertions.assertEquals(expectedArray6, array6,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в конце массива.");
-        Assertions.assertTrue(insertIndex == 999 || insertIndex == 1000,
+        Assertions.assertTrue(insertIndex == 7 || insertIndex == 8,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в конце массива.");
 
-        Array<Integer> array7 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array7.getLength(); i++) {
-            if(i < 56) array7.set(i, 0);
-            else array7.set(i, i * 10);
-        }
-        Array<Integer> pattern7 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern7.getLength(); i++) {
-            if(i < 56) pattern7.set(i, 0);
-            else pattern7.set(i, i * 10);
-        }
-        pattern7.insert(0, 0);
-        insertIndex = array7.binaryInsert(0, Integer::compare);
-        Assertions.assertEquals(pattern7, array7,
+        Array<Integer> array7 = new Array<>(Integer.class, 0);
+        array7.addAll(1,1,1,2,3,4,5,6,7,8);
+        Array<Integer> expectedArray7 = new Array<>(Integer.class, 0);
+        expectedArray7.addAll(1,1,1,1,2,3,4,5,6,7,8);
+        insertIndex = array7.binaryInsert(1, Integer::compare);
+        Assertions.assertEquals(expectedArray7, array7,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в начале массива.");
-        Assertions.assertTrue(insertIndex >= 0 && insertIndex <=56,
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <=3,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в начале массива.");
 
-        Array<Integer> array8 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array8.getLength(); i++) {
-            if(i > 200 && i < 312) array8.set(i, 2000);
-            else array8.set(i, i * 10);
-        }
-        Array<Integer> pattern8 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern8.getLength(); i++) {
-            if(i > 200 && i < 312) pattern8.set(i, 2000);
-            else pattern8.set(i, i * 10);
-        }
-        pattern8.insert(255, 2000);
-        insertIndex = array8.binaryInsert(2000, Integer::compare);
-        Assertions.assertEquals(pattern8, array8,
+        Array<Integer> array8 = new Array<>(Integer.class, 0);
+        array8.addAll(1,2,3,4,5,5,5,6,7,8);
+        Array<Integer> expectedArray8 = new Array<>(Integer.class, 0);
+        expectedArray8.addAll(1,2,3,4,5,5,5,5,6,7,8);
+        insertIndex = array8.binaryInsert(5, Integer::compare);
+        Assertions.assertEquals(expectedArray8, array8,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится где-то в середине массива.");
-        Assertions.assertTrue(insertIndex >= 200 && insertIndex <= 312,
+        Assertions.assertTrue(insertIndex >= 4 && insertIndex <= 7,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится где-то в середине массива.");
 
-        Array<Integer> array9 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array9.getLength(); i++) {
-            if(i > 870) array9.set(i, 8710);
-            else array9.set(i, i * 10);
-        }
-        Array<Integer> pattern9 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < pattern9.getLength(); i++) {
-            if(i > 870) pattern9.set(i, 8710);
-            else pattern9.set(i, i * 10);
-        }
-        pattern9.insert(877, 8710);
-        insertIndex = array9.binaryInsert(8710, Integer::compare);
-        Assertions.assertEquals(pattern9, array9,
+        Array<Integer> array9 = new Array<>(Integer.class, 0);
+        array9.addAll(1,2,3,4,5,6,7,8,8,8);
+        Array<Integer> expectedArray9 = new Array<>(Integer.class, 0);
+        expectedArray9.addAll(1,2,3,4,5,6,7,8,8,8,8);
+        insertIndex = array9.binaryInsert(8, Integer::compare);
+        Assertions.assertEquals(expectedArray9, array9,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в конце массива.");
-        Assertions.assertTrue(insertIndex >= 870 && insertIndex <= 1000,
+        Assertions.assertTrue(insertIndex >= 7 && insertIndex <= 10,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в конце массива.");
 
-        Array<Integer> array10 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array10.getLength(); i++) array10.set(i, 10);
-        Array<Integer> pattern10 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern10.getLength(); i++) pattern10.set(i, 10);
-        insertIndex = array10.binaryInsert(10, Integer::compare);
-        Assertions.assertEquals(pattern10, array10,
+        Array<Integer> array10 = new Array<>(Integer.class, 0);
+        array10.addAll(1,1,1,1,1,1,1,1);
+        Array<Integer> expectedArray10 = new Array<>(Integer.class, 0);
+        expectedArray10.addAll(1,1,1,1,1,1,1,1,1);
+        insertIndex = array10.binaryInsert(1, Integer::compare);
+        Assertions.assertEquals(expectedArray10, array10,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "и все элементы массива одинаковы.");
-        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 1000,
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 8,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "и все элементы массива одинаковы.");
@@ -567,12 +582,12 @@ class ArrayTest {
 
     @Test
     public void binaryInsert_NumberOfItemsIsOddAndMoreThenTwo() {
-        Array<Integer> array = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array.getLength(); i++) array.set(i, i * 10);
-        Array<Integer> pattern = new Array<>(Integer.class, 1002);
-        for(int i = 0; i < pattern.getLength(); i++) pattern.set(i, (i - 1) * 10);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(1,2,3,4,5,6,7,8,9);
+        Array<Integer> expectedArray = new Array<>(Integer.class, 0);
+        expectedArray.addAll(-10,1,2,3,4,5,6,7,8,9);
         int insertIndex = array.binaryInsert(-10, Integer::compare);
-        Assertions.assertEquals(pattern, array,
+        Assertions.assertEquals(expectedArray, array,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и меньше наименьшего элемента в массиве.");
@@ -581,42 +596,40 @@ class ArrayTest {
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и меньше наименьшего элемента в массиве.");
 
-        Array<Integer> array2 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array2.getLength(); i++) array2.set(i, i * 10);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern2.getLength(); i++) pattern2.set(i, i * 10);
-        pattern2.insert(556, 5557);
-        insertIndex = array2.binaryInsert(5557, Integer::compare);
-        Assertions.assertEquals(pattern2, array2,
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(1,2,3,4,5,7,8,9,10);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 0);
+        expectedArray2.addAll(1,2,3,4,5,6,7,8,9,10);
+        insertIndex = array2.binaryInsert(6, Integer::compare);
+        Assertions.assertEquals(expectedArray2, array2,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и должен быть добавлен где-то в средину массива.");
-        Assertions.assertEquals(556, insertIndex,
+        Assertions.assertEquals(5, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и должен быть добавлен где-то в средину массива.");
 
-        Array<Integer> array3 = new Array<>(Integer.class, 1000);
-        for(int i = 0; i < array3.getLength(); i++) array3.set(i, i * 10);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern3.getLength(); i++) pattern3.set(i, i * 10);
-        insertIndex = array3.binaryInsert(10000, Integer::compare);
-        Assertions.assertEquals(pattern3, array3,
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(1,2,3,4,5,6,7,8,9);
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 0);
+        expectedArray3.addAll(1,2,3,4,5,6,7,8,9,10);
+        insertIndex = array3.binaryInsert(10, Integer::compare);
+        Assertions.assertEquals(expectedArray3, array3,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и больше наибольшего элемента в массиве.");
-        Assertions.assertEquals(1000, insertIndex,
+        Assertions.assertEquals(9, insertIndex,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент отсутсвует\n " +
                         "и больше наибольшего элемента в массиве.");
 
-        Array<Integer> array4 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array4.getLength(); i++) array4.set(i, i * 10);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern4.getLength(); i++) pattern4.set(i, i * 10);
-        pattern4.insert(0, 0);
-        insertIndex = array4.binaryInsert(0, Integer::compare);
-        Assertions.assertEquals(pattern4, array4,
+        Array<Integer> array4 = new Array<>(Integer.class, 0);
+        array4.addAll(1,2,3,4,5,6,7,8,9);
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 0);
+        expectedArray4.addAll(1,1,2,3,4,5,6,7,8,9);
+        insertIndex = array4.binaryInsert(1, Integer::compare);
+        Assertions.assertEquals(expectedArray4, array4,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в начале массива.");
@@ -625,109 +638,86 @@ class ArrayTest {
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в начале массива.");
 
-        Array<Integer> array5 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array5.getLength(); i++) array5.set(i, i * 10);
-        Array<Integer> pattern5 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern5.getLength(); i++) pattern5.set(i, i * 10);
-        pattern5.insert(556, 5557);
-        insertIndex = array5.binaryInsert(5557, Integer::compare);
-        Assertions.assertEquals(pattern5, array5,
+        Array<Integer> array5 = new Array<>(Integer.class, 0);
+        array5.addAll(1,2,3,4,5,6,7,8,9);
+        Array<Integer> expectedArray5 = new Array<>(Integer.class, 0);
+        expectedArray5.addAll(1,2,3,4,5,5,6,7,8,9);
+        insertIndex = array5.binaryInsert(5, Integer::compare);
+        Assertions.assertEquals(expectedArray5, array5,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится где-то в середине массива.");
-        Assertions.assertTrue(insertIndex == 556 || insertIndex == 557,
+        Assertions.assertTrue(insertIndex == 4 || insertIndex == 5,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится где-то в середине массива.");
 
-        Array<Integer> array6 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array6.getLength(); i++) array6.set(i, i * 10);
-        Array<Integer> pattern6 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern6.getLength(); i++) pattern6.set(i, i * 10);
-        pattern6.insert(1001, 10000);
-        insertIndex = array6.binaryInsert(10000, Integer::compare);
-        Assertions.assertEquals(pattern6, array6,
+        Array<Integer> array6 = new Array<>(Integer.class, 0);
+        array6.addAll(1,2,3,4,5,6,7,8,9);
+        Array<Integer> expectedArray6 = new Array<>(Integer.class, 0);
+        expectedArray6.addAll(1,2,3,4,5,6,7,8,9,9);
+        insertIndex = array6.binaryInsert(9, Integer::compare);
+        Assertions.assertEquals(expectedArray6, array6,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в конце массива.");
-        Assertions.assertTrue(insertIndex == 1000 || insertIndex == 1001,
+        Assertions.assertTrue(insertIndex == 8 || insertIndex == 9,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "один раз и находится в конце массива.");
 
-        Array<Integer> array7 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array7.getLength(); i++) {
-            if(i < 56) array7.set(i, 0);
-            else array7.set(i, i * 10);
-        }
-        Array<Integer> pattern7 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern7.getLength(); i++) {
-            if(i < 56) pattern7.set(i, 0);
-            else pattern7.set(i, i * 10);
-        }
-        pattern7.insert(0, 0);
-        insertIndex = array7.binaryInsert(0, Integer::compare);
-        Assertions.assertEquals(pattern7, array7,
+        Array<Integer> array7 = new Array<>(Integer.class, 0);
+        array7.addAll(1,1,1,2,3,4,5,6,7,8,9);
+        Array<Integer> expectedArray7 = new Array<>(Integer.class, 0);
+        expectedArray7.addAll(1,1,1,1,2,3,4,5,6,7,8,9);
+        insertIndex = array7.binaryInsert(1, Integer::compare);
+        Assertions.assertEquals(expectedArray7, array7,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в начале массива.");
-        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 56,
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 3,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в начале массива.");
 
-        Array<Integer> array8 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array8.getLength(); i++) {
-            if(i > 200 && i < 312) array8.set(i, 2000);
-            else array8.set(i, i * 10);
-        }
-        Array<Integer> pattern8 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern8.getLength(); i++) {
-            if(i > 200 && i < 312) pattern8.set(i, 2000);
-            else pattern8.set(i, i * 10);
-        }
-        pattern8.insert(255, 2000);
-        insertIndex = array8.binaryInsert(2000, Integer::compare);
-        Assertions.assertEquals(pattern8, array8,
+        Array<Integer> array8 = new Array<>(Integer.class, 0);
+        array8.addAll(1,2,3,4,5,5,5,6,7,8,9);
+        Array<Integer> expectedArray8 = new Array<>(Integer.class, 0);
+        expectedArray8.addAll(1,2,3,4,5,5,5,5,6,7,8,9);
+        insertIndex = array8.binaryInsert(5, Integer::compare);
+        Assertions.assertEquals(expectedArray8, array8,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится где-то в середине массива.");
-        Assertions.assertTrue(insertIndex >= 200 && insertIndex <= 312,
+        Assertions.assertTrue(insertIndex >= 4 && insertIndex <= 7,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится где-то в середине массива.");
 
-        Array<Integer> array9 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array9.getLength(); i++) {
-            if(i > 870) array9.set(i, 8710);
-            else array9.set(i, i * 10);
-        }
-        Array<Integer> pattern9 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < pattern9.getLength(); i++) {
-            if(i > 870) pattern9.set(i, 8710);
-            else pattern9.set(i, i * 10);
-        }
-        pattern9.insert(877, 8710);
-        insertIndex = array9.binaryInsert(8710, Integer::compare);
-        Assertions.assertEquals(pattern9, array9,
+        Array<Integer> array9 = new Array<>(Integer.class, 0);
+        array9.addAll(1,2,3,4,5,6,7,8,9,9,9);
+        Array<Integer> expectedArray9 = new Array<>(Integer.class, 0);
+        expectedArray9.addAll(1,2,3,4,5,6,7,8,9,9,9,9);
+        insertIndex = array9.binaryInsert(9, Integer::compare);
+        Assertions.assertEquals(expectedArray9, array9,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в конце массива.");
-        Assertions.assertTrue(insertIndex >= 870 && insertIndex <= 1001,
+        Assertions.assertTrue(insertIndex >= 8 && insertIndex <= 11,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "несколько раз и последовательность находится в конце массива.");
 
-        Array<Integer> array10 = new Array<>(Integer.class, 1001);
-        for(int i = 0; i < array10.getLength(); i++) array10.set(i, 10);
-        Array<Integer> pattern10 = new Array<>(Integer.class, 1002);
-        for(int i = 0; i < pattern10.getLength(); i++) pattern10.set(i, 10);
-        insertIndex = array10.binaryInsert(10, Integer::compare);
-        Assertions.assertEquals(pattern10, array10,
+        Array<Integer> array10 = new Array<>(Integer.class, 0);
+        array10.addAll(1,1,1,1,1,1,1,1,1);
+        Array<Integer> expectedArray10 = new Array<>(Integer.class, 0);
+        expectedArray10.addAll(1,1,1,1,1,1,1,1,1,1);
+        insertIndex = array10.binaryInsert(1, Integer::compare);
+        Assertions.assertEquals(expectedArray10, array10,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "и все элементы массива одинаковы.");
-        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 1001,
+        Assertions.assertTrue(insertIndex >= 0 && insertIndex <= 9,
                 "Не верно работает метод binaryInsert(), если кол-во элементов массива\n " +
                         "больше двух и не четно, порядок возрастающий, добавляемый элемент присутсвует\n " +
                         "и все элементы массива одинаковы.");
@@ -735,238 +725,264 @@ class ArrayTest {
 
     @Test
     public void quickRemove() {
-        Array<String> array = new Array<>(String.class, 10);
-        for(int i = 0; i < array.getLength(); i++) array.setAndExpand(i, "Cat#" + i);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3,4,5,6,7,8,9);
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, ()-> array.quickRemove(-1));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, ()-> array.quickRemove(10));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, ()-> array.quickRemove(-1),
+                "Метод quickRemove(int index) должен проверять индекс на принадлежность границам массива.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, ()-> array.quickRemove(10),
+                "Метод quickRemove(int index) должен проверять индекс на принадлежность границам массива.");
 
-        Assertions.assertEquals("Cat#3", array.quickRemove(3));
-        Assertions.assertEquals("Cat#9", array.get(3));
-        Assertions.assertEquals(9, array.getLength());
+        Assertions.assertEquals(3, array.quickRemove(3),
+                "Метод quickRemove(int index) должен возвращать удаляемый элемент.");
+        Assertions.assertEquals(9, array.get(3),
+                "После удаления элемента с помощью quickRemove(int index), на его место должен встать " +
+                        "последний элемент.");
+        Assertions.assertEquals(9, array.getLength(),
+                "После вызова quickRemove(int index) длина массива должна уменьшится на единицу.");
 
-        Assertions.assertEquals("Cat#8", array.quickRemove(8));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, ()-> array.quickRemove(8));
-        Assertions.assertEquals(8, array.getLength());
-        array.expandTo(100);
-        Assertions.assertNull(array.get(8));
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,1,2,3,4,5,6,7,8,9);
+        Assertions.assertEquals(9, array2.quickRemove(9),
+                "Метод quickRemove(int index) должен возвращать удаляемый элемент, также, когда он " +
+                        "является последним элементом.");
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, ()-> array2.get(9),
+                "После удаления последнего элемента с помощью quickRemove(int index) при обращении к " +
+                        "элементу по индексу используемого в вызове метода quickRemove(int index) должно " +
+                        "генерироваться исключение.");
+        Assertions.assertEquals(9, array2.getLength(),
+                "После удаления последнего элемента с помощью quickRemove(int index) длина массива должна " +
+                        "уменьшится на единицу.");
+        array2.expandTo(10);
+        Assertions.assertNull(array2.get(9),
+                "После удаления последнего элемента с помощью quickRemove(int index) во внутренем массиве " +
+                        "по указанному индексу должно быть записано значение null.");
 
-        for(int i = 0; i < array.getLength(); i++) array.set(i, "Cat");
-        for(int i = 0, length = array.getLength(); i < length; i++) array.quickRemove(0);
-        Assertions.assertEquals(0, array.getLength());
-        array.expandTo(100);
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertNull(array.get(i));
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(1,2,3);
+        array3.quickRemove(0);
+        array3.quickRemove(0);
+        array3.quickRemove(0);
+        Assertions.assertEquals(0, array3.getLength(),
+                "С помощью метода quickRemove(int index) должно быть возможно удалить все элементы массива.");
+        array3.expandTo(3);
+        Assertions.assertNull(array3.get(0),
+                "После удаления всех элементов массива с помощью quickRemove(int index) во внутренем массиве " +
+                        "для каждого из них должно быть записано значение null.");
+        Assertions.assertNull(array3.get(1),
+                "После удаления всех элементов массива с помощью quickRemove(int index) во внутренем массиве " +
+                        "для каждого из них должно быть записано значение null.");
+        Assertions.assertNull(array3.get(2),
+                "После удаления всех элементов массива с помощью quickRemove(int index) во внутренем массиве " +
+                        "для каждого из них должно быть записано значение null.");
     }
 
     @Test
     public void orderedRemove() {
         Array<String> array = new Array<>(String.class, 0);
-        array.add("0");
-        array.add("1");
-        array.add("2");
-        array.add("3");
+        array.addAll("0","1","2","3");
 
-        Assertions.assertEquals("1", array.orderedRemove(1));
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(-1));
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(4));
+
+        Assertions.assertEquals("1", array.orderedRemove(1),
+                "Метод orderedRemove(int index) должен возвращать удаляемое значение.");
         Assertions.assertEquals("0", array.get(0));
         Assertions.assertEquals("2", array.get(1));
         Assertions.assertEquals("3", array.get(2));
-        Assertions.assertEquals(3, array.getLength());
+        Assertions.assertEquals(3, array.getLength(),
+                "После вызова orderedRemove(int index) длина массива должна уменьшится на единицу.");
 
         Assertions.assertEquals("3", array.orderedRemove(2),
-                "Метод remove() не верно работает при удалении последнего элемента.");
+                "Метод orderedRemove(int index) не верно работает при удалении последнего элемента.");
         Assertions.assertEquals(2, array.getLength(),
-                "Метод remove() не верно работает при удалении последнего элемента.");
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(-1));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(array.getLength()));
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(100));
+                "Метод orderedRemove(int index) не верно работает при удалении последнего элемента.");
     }
 
     @Test
     public void clear() {
-        Array<Integer> array = new Array<>(Integer.class, 100);
-        for(int i = 0; i < 100; ++i) array.set(i,i);
-        for(int i = 100; i < 200; ++i) array.add(i);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(1,2,3,4,5,6,7,8,9,10);
 
         array.clear();
+
         Assertions.assertEquals(0, array.getLength(),
                 "После вызова метода clear() длина массива должна равняться 0.");
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.get(0),
-                "После вызова метода clear() при попытке обраттиться к любому индексу должно " +
+                "После вызова метода clear() при попытке обратиться к любому индексу должно " +
                         "генерироваться исключение.");
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.set(0, 1000),
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.set(9, 1000),
                 "После вызова метода clear() при попытке обраттиться к любому индексу должно " +
                         "генерироваться исключение.");
         Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.quickRemove(0),
                 "После вызова метода clear() при попытке обраттиться к любому индексу должно " +
                         "генерироваться исключение.");
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(0),
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> array.orderedRemove(9),
                 "После вызова метода clear() при попытке обраттиться к любому индексу должно " +
                         "генерироваться исключение.");
 
-        array.expandTo(1077);
-        for(int i = 0; i < 1077; ++i) Assertions.assertNull(array.get(i));
-
-        for(int i = 500; i < 1077; ++i) array.set(i, i);
-
-        array.clear();
-
-        array.expandTo(2000);
-        for(int i = 0; i < 2000; ++i) Assertions.assertNull(array.get(i));
+        array.expandTo(3);
+        Assertions.assertNull(array.get(0),
+                "После вызова метода clear() все элементы внутреннего массива должны иметь значение null.");
+        Assertions.assertNull(array.get(1),
+                "После вызова метода clear() все элементы внутреннего массива должны иметь значение null.");
+        Assertions.assertNull(array.get(2),
+                "После вызова метода clear() все элементы внутреннего массива должны иметь значение null.");
     }
 
     @Test
     public void sort() {
         Array<Integer> array = new Array<>(Integer.class, 0);
-        Array<Integer> pattern = new Array<>(Integer.class, 0);
+        Array<Integer> expectedArray = new Array<>(Integer.class, 0);
         array.sort(Integer::compare);
-        Assertions.assertEquals(pattern, array,
+        Assertions.assertEquals(expectedArray, array,
                 "Не верно работает сортировка, если массив пуст.");
 
         Array<Integer> array2 = new Array<>(Integer.class, 1);
-        Array<Integer> pattern2 = new Array<>(Integer.class, 1);
         array2.set(0, 100);
-        pattern2.set(0, 100);
+        Array<Integer> expectedArray2 = new Array<>(Integer.class, 1);
+        expectedArray2.set(0, 100);
         array2.sort(Integer::compare);
-        Assertions.assertEquals(pattern2, array2,
+        Assertions.assertEquals(expectedArray2, array2,
                 "Не верно работает метод sort(), если кол-во элементов равно одному.");
 
         Array<Integer> array3 = new Array<>(Integer.class, 0);
-        Array<Integer> pattern3 = new Array<>(Integer.class, 0);
         array3.addAll(100, 12);
-        pattern3.addAll(12, 100);
+        Array<Integer> expectedArray3 = new Array<>(Integer.class, 0);
+        expectedArray3.addAll(12, 100);
         array3.sort(Integer::compare);
-        Assertions.assertEquals(pattern3, array3,
+        Assertions.assertEquals(expectedArray3, array3,
                 "Не верно работает метод sort(), если кол-во элементов равно днум, они уникальны,\n " +
                         "порядок обратен заданому порядку сортировки.");
 
         Array<Integer> array4 = new Array<>(Integer.class, 0);
-        Array<Integer> pattern4 = new Array<>(Integer.class, 0);
+        Array<Integer> expectedArray4 = new Array<>(Integer.class, 0);
         array4.addAll(12, 100);
-        pattern4.addAll(12, 100);
+        expectedArray4.addAll(12, 100);
         array4.sort(Integer::compare);
-        Assertions.assertEquals(pattern4, array4,
+        Assertions.assertEquals(expectedArray4, array4,
                 "Не верно работает метод sort(), если кол-во элементов равно днум, они уникальны,\n " +
                         "порядок соответсвует заданому порядку сортировки.");
 
         Array<Integer> array5 = new Array<>(Integer.class, 0);
-        Array<Integer> pattern5 = new Array<>(Integer.class, 0);
+        Array<Integer> expectedArray5 = new Array<>(Integer.class, 0);
         array5.addAll(100, 100);
-        pattern5.addAll(100, 100);
+        expectedArray5.addAll(100, 100);
         array5.sort(Integer::compare);
-        Assertions.assertEquals(pattern5, array5,
+        Assertions.assertEquals(expectedArray5, array5,
                 "Не верно работает метод sort(), если кол-во элементов равно днум, они одинаковы.");
 
-        Random random = new Random(1000L);
-
-        Array<Integer> array6 = new Array<>(Integer.class, 100000);
-        int[] pattern6 = new int[100000];
-        for(int i = 0; i < array6.getLength(); i++) pattern6[i] = i;
-        mix(pattern6, 1000);
-        for(int i = 0; i < array6.getLength(); i++) array6.set(i, pattern6[i]);
-        Arrays.sort(pattern6);
+        Array<Integer> array6 = new Array<>(Integer.class, 0);
+        array6.addAll(0,-10,3,4,1,120,99,76,75,1000);
+        Array<Integer> expectedArray6 = new Array<>(Integer.class, 0);
+        expectedArray6.addAll(-10,0,1,3,4,75,76,99,120,1000);
         array6.sort(Integer::compare);
-        Assertions.assertTrue(compare(array6, pattern6),
+        Assertions.assertEquals(expectedArray6, array6,
                 "Не верно работает метод сорт, если кол-во элементов массива больше двух и четно,\n " +
                         "элементы уникальны, порядок случаен.");
 
-        Array<Integer> array7 = new Array<>(Integer.class, 100000);
-        int[] pattern7 = new int[100000];
-        for(int i = 0; i < array7.getLength(); i++) {
-            int value = (int)(random.nextDouble() * 1000);
-            pattern7[i] = value;
-            array7.set(i, value);
-        }
-        Arrays.sort(pattern7);
+        Array<Integer> array7 = new Array<>(Integer.class, 0);
+        array7.addAll(0,-10,99,4,1,99,99,76,75,1000);
+        Array<Integer> expectedArray7 = new Array<>(Integer.class, 0);
+        expectedArray7.addAll(-10,0,1,4,75,76,99,99,99,1000);
         array7.sort(Integer::compare);
-        Assertions.assertTrue(compare(array7, pattern7),
+        Assertions.assertEquals(expectedArray7, array7,
                 "Не верно работает метод сорт, если кол-во элементов массива больше двух и четно,\n " +
                         "есть повторяющиеся элементы, порядок случаен.");
 
-        Array<Integer> array8 = new Array<>(Integer.class, 100000);
-        int[] pattern8 = new int[100000];
-        for(int i = 0; i < array8.getLength(); i++) {
-            pattern8[i] = 100;
-            array8.set(i, 100);
-        }
+        Array<Integer> array8 = new Array<>(Integer.class, 0);
+        array8.addAll(1,1,1,1,1,1,1,1);
+        Array<Integer> expectedArray8 = new Array<>(Integer.class, 0);
+        expectedArray8.addAll(1,1,1,1,1,1,1,1);
         array8.sort(Integer::compare);
-        Assertions.assertTrue(compare(array8, pattern8),
+        Assertions.assertEquals(expectedArray8, array8,
                 "Не верно работает метод сорт, если кол-во элементов массива больше двух и четно,\n " +
                         "все элементы одинаковы.");
 
-        Array<Integer> array9 = new Array<>(Integer.class, 100000);
-        int[] pattern9 = new int[100000];
-        for(int i = 0; i < array9.getLength(); i++) {
-            pattern9[i] = i;
-            array9.set(i, i);
-        }
+        Array<Integer> array9 = new Array<>(Integer.class, 0);
+        array9.addAll(1,2,3,4,5,6,7,8,9,10);
+        Array<Integer> expectedArray9 = new Array<>(Integer.class, 0);
+        expectedArray9.addAll(1,2,3,4,5,6,7,8,9,10);
         array9.sort(Integer::compare);
-        Assertions.assertTrue(compare(array9, pattern9),
+        Assertions.assertEquals(expectedArray9, array9,
                 "Не верно работает метод сорт, если кол-во элементов массива больше двух и четно,\n " +
                         "элементы уникальны, порядок соответствует заданому.");
 
-        Array<Integer> array10 = new Array<>(Integer.class, 100000);
-        int[] pattern10 = new int[100000];
-        for(int i = array10.getLength() - 1; i >= 0; --i) {
-            pattern10[i] = i;
-            array10.set(i, i);
-        }
+        Array<Integer> array10 = new Array<>(Integer.class, 0);
+        array10.addAll(10,9,8,7,6,5,4,3,2,1);
+        Array<Integer> expectedArray10 = new Array<>(Integer.class, 0);
+        expectedArray10.addAll(1,2,3,4,5,6,7,8,9,10);
         array10.sort(Integer::compare);
-        Assertions.assertTrue(compare(array10, pattern10),
+        Assertions.assertEquals(expectedArray10, array10,
                 "Не верно работает метод сорт, если кол-во элементов массива больше двух и четно,\n " +
                         "элементы уникальны, порядок обратен заданому.");
     }
 
     @Test
     public void linearSearch() {
-        Array<String> array = new Array<>(String.class, 0);
-        for(int i = 0; i < 100; i++) array.add("Cat#" + i);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3);
 
-        for(int i = 0; i < 100; i++)
-            Assertions.assertEquals(i, array.linearSearch("Cat#" + i));
+        Assertions.assertEquals(0, array.linearSearch(0));
+        Assertions.assertEquals(1, array.linearSearch(1));
+        Assertions.assertEquals(2, array.linearSearch(2));
+        Assertions.assertEquals(3, array.linearSearch(3));
+        Assertions.assertEquals(-1, array.linearSearch(100));
 
-        for(int i = 12; i < 24; i++) array.set(i, null);
-        Assertions.assertEquals(12, array.linearSearch(null));
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,null,null,3);
+        Assertions.assertEquals(1, array2.linearSearch(null),
+                "Метод linearSearch(T value) должен уметь находить индекс для null значений, если они " +
+                        "присутсвуют в массиве.");
 
-        for(int i = 12; i < 24; i++) array.set(i, "Unique Cat");
-        Assertions.assertEquals(12, array.linearSearch("Unique Cat"));
-
-        Assertions.assertEquals(-1, array.linearSearch("monkey"));
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(0,1,1,1,1,2,3,4,4,4,4,5);
+        Assertions.assertEquals(1, array3.linearSearch(1),
+                "Если исклмый элемент присутсвует несколько раз в массиве, linearSearch(T value) должен " +
+                        "возвращать индекс первого встретевшегося элемента с таким значением.");
+        Assertions.assertEquals(7, array3.linearSearch(4),
+                "Если исклмый элемент присутсвует несколько раз в массиве, linearSearch(T value) должен " +
+                        "возвращать индекс первого встретевшегося элемента с таким значением.");
     }
 
     @Test
     public void linearSearch_Interval() {
-        Array<String> array = new Array<>(String.class, 0);
-        for(int i = 0; i < 100; i++) array.add("Cat#" + i);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3,null,5,6,7,null,9);
 
-        for(int i = 12; i < 87; i++)
-            Assertions.assertEquals(i, array.linearSearch("Cat#" + i, 12, 87));
+        Assertions.assertEquals(4, array.linearSearch(null, 2, 10),
+                "Метод linearSearch(T value, int fromIndex, int toIndex) должен возвращать индекс " +
+                        "первого встретевшегося элемента с начала интервала поиска, значение которого равно " +
+                        "значению искомого элемента.");
+        Assertions.assertEquals(2, array.linearSearch(2, 2, 10),
+                "Если искомый элемент на промежутке [fromIndex, toIndex) встречается впервые под индексом " +
+                        "fromIndex, метод linearSearch(T value, int fromIndex, int toIndex) должен возвращать " +
+                        "индекс равный fromIndex.");
+        Assertions.assertEquals(-1, array.linearSearch(2, 3, 10),
+                "Метод linearSearch(T value, int fromIndex, int toIndex) должен возвращать -1, если " +
+                        "искомый элемент присутвует в массиве, но отсутсует в заданном интервале поиска.");
+        Assertions.assertEquals(-1, array.linearSearch(12, 0, 10),
+                "Метод linearSearch(T value, int fromIndex, int toIndex) должен возвращать -1, если искомый " +
+                        "элемент отсутвует в массиве.");
+        Assertions.assertEquals(-1, array.linearSearch(1, 1, 1),
+                "Если fromIndex == toIndex, метод linearSearch(T value, int fromIndex, int toIndex) " +
+                        "должен возвращать -1.");
 
-        for(int i = 15; i < 24; i++) array.set(i, null);
-        Assertions.assertEquals(15, array.linearSearch(null, 12, 30));
-
-        for(int i = 15; i < 24; i++) array.set(i, "Unique Cat");
-        Assertions.assertEquals(15, array.linearSearch("Unique Cat", 12, 30));
-
-        Assertions.assertEquals(-1, array.linearSearch("Cat#51", 0, 50));
-
-        Assertions.assertEquals(-1, array.linearSearch("Cat#51", 51, 51));
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                ()-> array.linearSearch("Cat#0", -1, 100));
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                ()-> array.linearSearch("Cat#0", 0, 101));
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                ()-> array.linearSearch("Cat#0", 100, 0));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class,
+                ()-> array.linearSearch(0, -1, 11));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class,
+                ()-> array.linearSearch(0, 0, 11));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class,
+                ()-> array.linearSearch(0, 10, 0));
     }
 
     @Test
     public void binarySearch_ArrayIsEmptyOrContainsOneItem() {
-        Array<Integer> array = new Array<>(Integer.class, 0);
-
-        Assertions.assertEquals(-1, array.binarySearch(0, Integer::compare),
+        Array<Integer> emptyArray = new Array<>(Integer.class, 0);
+        Assertions.assertEquals(-1, emptyArray.binarySearch(0, Integer::compare),
                 "Если массив пустой, метод binarySearch() должен возвращать -1 для любого значения.");
 
+        Array<Integer> array = new Array<>(Integer.class, 0);
         array.add(0);
         Assertions.assertEquals(0, array.binarySearch(0, Integer::compare),
                 "Метод binarySearch() должен возвращать 0, когда искомый элемент является\n " +
@@ -982,9 +998,8 @@ class ArrayTest {
     @Test
     public void binarySearch_AscendingOrder() {
         Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0, 10);
 
-        array.add(0);
-        array.add(10);
         Assertions.assertEquals(-1, array.binarySearch(-1, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент меньше\n " +
                         "наименьшего элемента в массиве из двух элементов отсортирванных в\n " +
@@ -1005,73 +1020,80 @@ class ArrayTest {
                         "в конце массива из двух элементов, отсортированного в возрастающем порядке.");
 
 
-        for(int i = 2; i < 1000; i++) array.add(i * 10);
-        Assertions.assertEquals(-1, array.binarySearch(-10, Integer::compare),
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,10,20,30,40,50,60,70,80,90);
+        Assertions.assertEquals(-1, array2.binarySearch(-10, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "меньше наименьшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов четное, а их порядок возрастающий.");
-        Assertions.assertEquals(-1, array.binarySearch(1000000, Integer::compare),
+        Assertions.assertEquals(-1, array2.binarySearch(100, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "больше наибольшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов четное, а их порядок возрастающий.");
-        Assertions.assertEquals(-1, array.binarySearch(5007, Integer::compare),
+        Assertions.assertEquals(-1, array2.binarySearch(57, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "отсутсвует в массиве имеющем больше двух элементов(число\n " +
                         "элементов четное, а их порядок возрастающий), при этом искомый элемент\n " +
                         "мог бы расположиться где-то посередине.");
-        Assertions.assertEquals(0, array.binarySearch(0, Integer::compare),
+        Assertions.assertEquals(0, array2.binarySearch(0, Integer::compare),
                 "Метод binarySearch() должен возвращать 0, если искомый элемент\n " +
                         "присутствует в единственном экземпляре и находится в начале массива,\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок\n" +
                         "возрастающий).");
-        Assertions.assertEquals(999, array.binarySearch(9990, Integer::compare),
+        Assertions.assertEquals(9, array2.binarySearch(90, Integer::compare),
                 "Метод binarySearch() должен возвращать последний индекс массива,\n " +
                         "если искомый элемент присутствует в единственном экземпляре и находится\n " +
                         "в конце массива, имеющем больше двух элементов(число элементов четное,\n " +
                         "а их порядок возрастающий).");
-        Assertions.assertEquals(497, array.binarySearch(4970, Integer::compare),
+        Assertions.assertEquals(5, array2.binarySearch(50, Integer::compare),
                 "Метод binarySearch() должен правильно находить индекс искомого элемента,\n " +
                         "если тот присутсвует в массиве в единтсвенном экземпляре имеющем больше\n " +
                         "двух элементов(число элементов четное, а их порядок возрастающий) и находится\n " +
                         "примерно где-то посередине.");
-        for(int i = 0; i < array.getLength(); i++) {
-            Assertions.assertEquals(i, array.binarySearch(i * 10, Integer::compare),
+        for(int i = 0; i < array2.getLength(); i++) {
+            Assertions.assertEquals(i, array2.binarySearch(i * 10, Integer::compare),
                     "Метод binarySearch должен находить индекс каждого элемента, присутсвующего\n " +
                             "в массиве один раз, с учетом того, что число элементов массива четно,\n " +
                             "порядок возрастающий. Элемент для которого данный метод работает неправильно,\n " +
                             "равен " + (i * 10));
         }
-        for(int i = 0; i < 30; i++) array.set(i, 10);
-        Assertions.assertNotEquals(-1, array.binarySearch(10, Integer::compare),
+
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(10,10,10,30,40,50,60,70,80,90);
+        Assertions.assertNotEquals(-1, array3.binarySearch(10, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное, а их порядок возрастающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается с начала массива.");
-        Assertions.assertEquals(10, array.get(array.binarySearch(10, Integer::compare)),
+        Assertions.assertEquals(10, array3.get(array3.binarySearch(10, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок возрастающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "с начала массива.");
-        for(int i = 490; i < 550; i++) array.set(i, 5000);
-        Assertions.assertNotEquals(-1, array.binarySearch(5000, Integer::compare),
+
+        Array<Integer> array4 = new Array<>(Integer.class, 0);
+        array4.addAll(0,10,20,30,40,40,40,70,80,90);
+        Assertions.assertNotEquals(-1, array4.binarySearch(40, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное, а их порядок возрастающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается где-то с середины массива.");
-        Assertions.assertEquals(5000, array.get(array.binarySearch(5000, Integer::compare)),
+        Assertions.assertEquals(40, array4.get(array4.binarySearch(40, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок возрастающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "где-то с середины массива.");
-        for(int i = 910; i < 1000; i++) array.set(i, 10000);
-        Assertions.assertNotEquals(-1, array.binarySearch(10000, Integer::compare),
+
+        Array<Integer> array5 = new Array<>(Integer.class, 0);
+        array5.addAll(0,10,20,30,40,40,40,70,70,70);
+        Assertions.assertNotEquals(-1, array5.binarySearch(70, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное, а их порядок возрастающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому находится в конце массива.");
-        Assertions.assertEquals(10000, array.get(array.binarySearch(10000, Integer::compare)),
+        Assertions.assertEquals(70, array5.get(array5.binarySearch(70, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок возрастающий)\n " +
@@ -1079,73 +1101,81 @@ class ArrayTest {
                         "в конце массива.");
 
 
-        for(int i = 0; i < 1001; i++) array.setAndExpand(i, i * 10);
-        Assertions.assertEquals(-1, array.binarySearch(-10, Integer::compare),
+        Array<Integer> array6 = new Array<>(Integer.class, 0);
+        array6.addAll(0,10,20,30,40,50,60,70,80);
+        Assertions.assertEquals(-1, array6.binarySearch(-10, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "меньше наименьшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов не четное, а их порядок возрастающий.");
-        Assertions.assertEquals(-1, array.binarySearch(1000000, Integer::compare),
+        Assertions.assertEquals(-1, array6.binarySearch(90, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "больше наибольшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов не четное, а их порядок возрастающий.");
-        Assertions.assertEquals(-1, array.binarySearch(5007, Integer::compare),
+        Assertions.assertEquals(-1, array6.binarySearch(57, Integer::compare),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "отсутсвует в массиве имеющем больше двух элементов(число\n " +
                         "элементов не четное, а их порядок возрастающий), при этом искомый элемент\n " +
                         "мог бы расположиться где-то посередине.");
-        Assertions.assertEquals(0, array.binarySearch(0, Integer::compare),
+        Assertions.assertEquals(0, array6.binarySearch(0, Integer::compare),
                 "Метод binarySearch() должен возвращать 0, если искомый элемент\n " +
                         "присутствует в единственном экземпляре и находится в начале массива,\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок\n" +
                         "возрастающий).");
-        Assertions.assertEquals(1000, array.binarySearch(10000, Integer::compare),
+        Assertions.assertEquals(8, array6.binarySearch(80, Integer::compare),
                 "Метод binarySearch() должен возвращать последний индекс массива,\n " +
                         "если искомый элемент присутствует в единственном экземпляре и находится\n " +
                         "в конце массива, имеющем больше двух элементов(число элементов не четное,\n " +
                         "а их порядок возрастающий).");
-        Assertions.assertEquals(497, array.binarySearch(4970, Integer::compare),
+        Assertions.assertEquals(5, array6.binarySearch(50, Integer::compare),
                 "Метод binarySearch() должен правильно находить индекс искомого элемента,\n " +
                         "если тот присутсвует в единственном экземпляре в массиве имеющем больше\n " +
                         "двух элементов(число элементов не четное, а их порядок возрастающий) и\n " +
                         "находится примерно где-то посередине.");
-        for(int i = 0; i < array.getLength(); i++) {
-            Assertions.assertEquals(i, array.binarySearch(i * 10, Integer::compare),
+        for(int i = 0; i < array6.getLength(); i++) {
+            Assertions.assertEquals(i, array6.binarySearch(i * 10, Integer::compare),
                     "Метод binarySearch должен находить индекс каждого элемента, присутсвующего\n " +
                             "в массиве один раз, с учетом того, что число элементов массива не четно,\n " +
                             "порядок возрастающий. Элемент для которого данный метод работает неправильно,\n " +
                             "равен " + (i * 10));
         }
-        for(int i = 0; i < 30; i++) array.set(i, 10);
-        Assertions.assertNotEquals(-1, array.binarySearch(10, Integer::compare),
+
+        Array<Integer> array7 = new Array<>(Integer.class, 0);
+        array7.addAll(10,10,10,30,40,50,60,70,80);
+        Assertions.assertNotEquals(-1, array7.binarySearch(10, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "не четное, а их порядок возрастающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается с начала массива.");
-        Assertions.assertEquals(10, array.get(array.binarySearch(10, Integer::compare)),
+        Assertions.assertEquals(10, array7.get(array7.binarySearch(10, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок возрастающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "с начала массива.");
-        for(int i = 490; i < 550; i++) array.set(i, 5000);
-        Assertions.assertNotEquals(-1, array.binarySearch(5000, Integer::compare),
+
+        Array<Integer> array8 = new Array<>(Integer.class, 0);
+        array8.addAll(0,10,20,40,40,40,60,70,80);
+        Assertions.assertNotEquals(-1, array8.binarySearch(40, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "не четное, а их порядок возрастающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается где-то с середины массива.");
-        Assertions.assertEquals(5000, array.get(array.binarySearch(5000, Integer::compare)),
+        Assertions.assertEquals(40, array8.get(array8.binarySearch(40, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок возрастающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "где-то с середины массива.");
-        for(int i = 910; i < 1001; i++) array.set(i, 10000);
-        Assertions.assertNotEquals(-1, array.binarySearch(10000, Integer::compare),
+
+
+        Array<Integer> array9 = new Array<>(Integer.class, 0);
+        array9.addAll(0,10,20,30,40,50,60,60,60);
+        Assertions.assertNotEquals(-1, array9.binarySearch(60, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "не четное, а их порядок возрастающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому находится в конце массива.");
-        Assertions.assertEquals(10000, array.get(array.binarySearch(10000, Integer::compare)),
+        Assertions.assertEquals(60, array9.get(array9.binarySearch(60, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок возрастающий)\n " +
@@ -1156,10 +1186,8 @@ class ArrayTest {
     @Test
     public void binarySearch_DescendingOrder() {
         Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(10, 0);
 
-
-        array.add(10);
-        array.add(0);
         Assertions.assertEquals(-1, array.binarySearch(-1, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент меньше\n " +
                         "наименьшего элемента в массиве из двух элементов отсортирванных в\n " +
@@ -1180,151 +1208,162 @@ class ArrayTest {
                         "в конце массива из двух элементов, отсортированного в убывающем порядке.");
 
 
-        array = new Array<>(Integer.class, 0);
-        for(int i = 999; i >= 0; i--) array.add(i * 10);
-        Assertions.assertEquals(-1, array.binarySearch(-10, (Integer a, Integer b) -> b - a),
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(90,80,70,60,50,40,30,20,10,0);
+        Assertions.assertEquals(-1, array2.binarySearch(-10, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "меньше наименьшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов четное, а их порядок убывающий.");
-        Assertions.assertEquals(-1, array.binarySearch(1000000, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(-1, array2.binarySearch(100, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "больше наибольшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов четное, а их порядок убывающий.");
-        Assertions.assertEquals(-1, array.binarySearch(5007, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(-1, array2.binarySearch(57, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "отсутсвует в массиве имеющем больше двух элементов(число\n " +
                         "элементов четное, а их порядок убывающий), при этом искомый элемент\n " +
                         "мог бы расположиться где-то посередине.");
-        Assertions.assertEquals(0, array.binarySearch(9990, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(0, array2.binarySearch(90, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать 0, если искомый элемент\n " +
                         "присутствует в единственном экземпляре и находится в начале массива,\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок\n" +
                         "убывающий).");
-        Assertions.assertEquals(999, array.binarySearch(0, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(9, array2.binarySearch(0, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать последний индекс массива,\n " +
                         "если искомый элемент присутствует в единственном экземпляре и находится\n " +
                         "в конце массива, имеющем больше двух элементов(число элементов четное,\n " +
                         "а их порядок убывающий).");
-        Assertions.assertEquals(498, array.binarySearch(5010, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(4, array2.binarySearch(50, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен правильно находить индекс искомого элемента,\n " +
                         "если тот присутсвует в массиве в единтсвенном экземпляре имеющем больше\n " +
                         "двух элементов(число элементов четное, а их порядок убывающий) и находится\n " +
                         "примерно где-то посередине.");
-        for(int i = array.getLength() - 1; i >= 0; i--) {
+        for(int i = array2.getLength() - 1; i >= 0; i--) {
             Assertions.assertEquals(
-                    array.getLength() - 1 - i, array.binarySearch(i * 10, (Integer a, Integer b) -> b - a),
+                    array2.getLength() - 1 - i, array2.binarySearch(i * 10, (Integer a, Integer b) -> b - a),
                     "Метод binarySearch должен находить индекс каждого элемента, присутсвующего\n " +
                             "в массиве один раз, с учетом того, что число элементов массива четно,\n " +
                             "порядок убывающий. Элемент для которого данный метод работает неправильно,\n " +
                             "равен " + (i * 10));
         }
-        for(int i = 0; i < 30; i++) array.set(i, 10000);
-        Assertions.assertNotEquals(-1, array.binarySearch(10000, (Integer a, Integer b) -> b - a),
+
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(70,70,70,60,50,40,30,20,10,0);
+        Assertions.assertNotEquals(-1, array3.binarySearch(70, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное, а их порядок убывающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается с начала массива.");
-        Assertions.assertEquals(10000, array.get(array.binarySearch(10000, (Integer a, Integer b) -> b - a)),
+        Assertions.assertEquals(70, array3.get(array3.binarySearch(70, (Integer a, Integer b) -> b - a)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок убывающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "с начала массива.");
-        for(int i = 498; i < 550; i++) array.set(i, 4990);
-        Assertions.assertNotEquals(-1, array.binarySearch(4990, (Integer a, Integer b) -> b - a),
+
+        Array<Integer> array4 = new Array<>(Integer.class, 0);
+        array4.addAll(90,80,70,60,50,50,50,20,10,0);
+        Assertions.assertNotEquals(-1, array4.binarySearch(50, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное, а их порядок убывающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается где-то с середины массива.");
-        Assertions.assertEquals(4990, array.get(array.binarySearch(4990, (Integer a, Integer b) -> b - a)),
+        Assertions.assertEquals(50, array4.get(array4.binarySearch(50, (Integer a, Integer b) -> b - a)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок убывающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "где-то с середины массива.");
-        for(int i = 910; i < 1000; i++) array.set(i, 0);
-        Assertions.assertNotEquals(-1, array.binarySearch(0, (Integer a, Integer b) -> b - a),
+
+        Array<Integer> array5 = new Array<>(Integer.class, 0);
+        array5.addAll(90,80,70,60,50,40,30,10,10,10);
+        Assertions.assertNotEquals(-1, array5.binarySearch(10, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное, а их порядок убывающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому находится в конце массива.");
-        Assertions.assertEquals(0, array.get(array.binarySearch(0, (Integer a, Integer b) -> b - a)),
+        Assertions.assertEquals(10, array5.get(array5.binarySearch(10, (Integer a, Integer b) -> b - a)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное, а их порядок убывающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому находится\n " +
                         "в конце массива.");
 
-
-        array = new Array<>(Integer.class, 0);
-        for(int i = 1000; i >= 0; i--) array.add(i * 10);
-        Assertions.assertEquals(-1, array.binarySearch(-10, (Integer a, Integer b) -> b - a),
+        Array<Integer> array6 = new Array<>(Integer.class, 0);
+        array6.addAll(100,90,80,70,60,50,40,30,20,10,0);
+        Assertions.assertEquals(-1, array6.binarySearch(-10, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "меньше наименьшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов не четное, а их порядок убывающий.");
-        Assertions.assertEquals(-1, array.binarySearch(1000000, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(-1, array6.binarySearch(110, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "больше наибольшего элемента в массиве имеющего больше двух элементов,\n " +
                         "при этом число элементов не четное, а их порядок убывающий.");
-        Assertions.assertEquals(-1, array.binarySearch(5007, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(-1, array6.binarySearch(57, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать -1, если искомый элемент\n " +
                         "отсутсвует в массиве имеющем больше двух элементов(число\n " +
                         "элементов не четное, а их порядок убывающий), при этом искомый элемент\n " +
                         "мог бы расположиться где-то посередине.");
-        Assertions.assertEquals(0, array.binarySearch(10000, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(0, array6.binarySearch(100, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать 0, если искомый элемент\n " +
                         "присутствует в единственном экземпляре и находится в начале массива,\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок\n" +
                         "убывающий).");
-        Assertions.assertEquals(1000, array.binarySearch(0, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(10, array6.binarySearch(0, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен возвращать последний индекс массива,\n " +
                         "если искомый элемент присутствует в единственном экземпляре и находится\n " +
                         "в конце массива, имеющем больше двух элементов(число элементов не четное,\n " +
                         "а их порядок убывающий).");
-        Assertions.assertEquals(500, array.binarySearch(5000, (Integer a, Integer b) -> b - a),
+        Assertions.assertEquals(5, array6.binarySearch(50, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() должен правильно находить индекс искомого элемента,\n " +
                         "если тот присутсвует в единтсвенном экземпляре в массиве имеющем больше\n " +
                         "двух элементов(число элементов не четное, а их порядок убывающий) и находится\n " +
                         "примерно где-то посередине.");
-        for(int i = array.getLength() - 1; i >= 0; i--) {
+        for(int i = array6.getLength() - 1; i >= 0; i--) {
             Assertions.assertEquals(
-                    array.getLength() - 1 - i, array.binarySearch(i * 10, (Integer a, Integer b) -> b - a),
+                    array6.getLength() - 1 - i, array6.binarySearch(i * 10, (Integer a, Integer b) -> b - a),
                     "Метод binarySearch должен находить индекс каждого элемента, присутсвующего\n " +
                             "в массиве один раз, с учетом того, что число элементов массива не четно,\n " +
                             "порядок убывающий. Элемент для которого данный метод работает неправильно,\n " +
                             "равен " + (i * 10));
         }
-        for(int i = 0; i < 30; i++) array.set(i, 10000);
-        Assertions.assertNotEquals(-1, array.binarySearch(10000, (Integer a, Integer b) -> b - a),
+
+        Array<Integer> array7 = new Array<>(Integer.class, 0);
+        array7.addAll(90,90,90,70,60,50,40,30,20,10,0);
+        Assertions.assertNotEquals(-1, array7.binarySearch(90, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "не четное, а их порядок убывающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается с начала массива.");
-        Assertions.assertEquals(10000, array.get(array.binarySearch(10000, (Integer a, Integer b) -> b - a)),
+        Assertions.assertEquals(90, array7.get(array7.binarySearch(90, (Integer a, Integer b) -> b - a)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок убывающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "с начала массива.");
-        for(int i = 500; i < 550; i++) array.set(i, 5000);
-        Assertions.assertNotEquals(-1, array.binarySearch(5000, (Integer a, Integer b) -> b - a),
+
+        Array<Integer> array8 = new Array<>(Integer.class, 0);
+        array8.addAll(100,90,80,70,50,50,50,30,20,10,0);
+        Assertions.assertNotEquals(-1, array8.binarySearch(50, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "не четное, а их порядок убывающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому начинается где-то с середины массива.");
-        Assertions.assertEquals(5000, array.get(array.binarySearch(5000, (Integer a, Integer b) -> b - a)),
+        Assertions.assertEquals(50, array8.get(array8.binarySearch(50, (Integer a, Integer b) -> b - a)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок убывающий)\n " +
                         "несколько раз, и последовательность из элементов равных искомому начинается\n " +
                         "где-то с середины массива.");
-        for(int i = 910; i <= 1000; i++) array.set(i, 0);
-        Assertions.assertNotEquals(-1, array.binarySearch(0, (Integer a, Integer b) -> b - a),
+
+        Array<Integer> array9 = new Array<>(Integer.class, 0);
+        array9.addAll(100,90,80,70,60,50,40,30,10,10,10);
+        Assertions.assertNotEquals(-1, array9.binarySearch(10, (Integer a, Integer b) -> b - a),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "не четное, а их порядок убывающий) несколько раз, и последовательность\n " +
                         "из элементов равных искомому находится в конце массива.");
-        Assertions.assertEquals(0, array.get(array.binarySearch(0, (Integer a, Integer b) -> b - a)),
+        Assertions.assertEquals(10, array9.get(array9.binarySearch(10, (Integer a, Integer b) -> b - a)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов не четное, а их порядок убывающий)\n " +
@@ -1344,18 +1383,20 @@ class ArrayTest {
                         "что и искомый элемент, в случае - если искомый элемент совпадает с каждым\n " +
                         "элементом в массиве из двух элементов.");
 
-        for(int i = 0; i < 98; i++) array.add(100);
-        Assertions.assertNotEquals(-1, array.binarySearch(100, Integer::compare),
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(100,100,100,100,100,100,100,100,100,100);
+        Assertions.assertNotEquals(-1, array2.binarySearch(100, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
                         "четное), при этом все элеметы массива равны искомому.");
-        Assertions.assertEquals(100, array.get(array.binarySearch(100, Integer::compare)),
+        Assertions.assertEquals(100, array2.get(array.binarySearch(100, Integer::compare)),
                 "Метод binarySearch() должен возвращать индекс элемента имеющего то же значение," +
                         "что и искомый элемент, в случае - если искомый элемент присутсвует в массиве\n " +
                         "имеющем больше двух элементов(число элементов четное), при этом все элеметы\n " +
                         "массива равны искомому.");
 
-        array.add(100);
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(100,100,100,100,100,100,100,100,100,100,100);
         Assertions.assertNotEquals(-1, array.binarySearch(100, Integer::compare),
                 "Метод binarySearch() не должен возвращать -1, если искомый элемент\n " +
                         "присутсвует в массиве имеющем больше двух элементов(число элементов\n " +
@@ -1369,69 +1410,193 @@ class ArrayTest {
 
     @Test
     public void expandTo() {
-        Array<String> array = new Array<>(String.class, 10);
-        for(int i = 0; i < array.getLength(); i++) array.set(i, "Cat#" + i);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3);
 
-        array.expandTo(8);
-        Assertions.assertEquals(10, array.getLength());
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertEquals("Cat#" + i, array.get(i));
+        array.expandTo(2);
+        Assertions.assertEquals(4, array.getLength(),
+                "Если метод expandTo(int newLength) вызывается со значением меньшим его текущей длины, " +
+                        "то метод expandTo(int newLength) не должен изменять порядок и значение текущих " +
+                        "элементов массива.");
+        Assertions.assertEquals(0, array.get(0),
+                "Если метод expandTo(int newLength) вызывается со значением меньшим его текущей длины, " +
+                        "то метод expandTo(int newLength) не должен изменять порядок и значение текущих " +
+                        "элементов массива.");
+        Assertions.assertEquals(1, array.get(1),
+                "Если метод expandTo(int newLength) вызывается со значением меньшим его текущей длины, " +
+                        "то метод expandTo(int newLength) не должен изменять порядок и значение текущих " +
+                        "элементов массива.");
+        Assertions.assertEquals(2, array.get(2),
+                "Если метод expandTo(int newLength) вызывается со значением меньшим его текущей длины, " +
+                        "то метод expandTo(int newLength) не должен изменять порядок и значение текущих " +
+                        "элементов массива.");
+        Assertions.assertEquals(3, array.get(3),
+                "Если метод expandTo(int newLength) вызывается со значением меньшим его текущей длины, " +
+                        "то метод expandTo(int newLength) не должен изменять порядок и значение текущих " +
+                        "элементов массива.");
 
-        array.expandTo(-1);
-        Assertions.assertEquals(10, array.getLength());
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertEquals("Cat#" + i, array.get(i));
+        Assertions.assertDoesNotThrow(() -> array.expandTo(-1),
+                "Вызов метода expandTo(int newLength) с отрицательным значением не должен приводить " +
+                        "к исключению.");
+        Assertions.assertEquals(4, array.getLength(),
+                "Вызов метода expandTo(int newLength) с отрицательным значением не должен изменять " +
+                        "рамзер массива.");
+        Assertions.assertEquals(0, array.get(0),
+                "Вызов метода expandTo(int newLength) с отрицательным значением не должен изменять " +
+                        "порядок и значение текущих элементов массива.");
+        Assertions.assertEquals(1, array.get(1),
+                "Вызов метода expandTo(int newLength) с отрицательным значением не должен изменять " +
+                        "порядок и значение текущих элементов массива.");
+        Assertions.assertEquals(2, array.get(2),
+                "Вызов метода expandTo(int newLength) с отрицательным значением не должен изменять " +
+                        "порядок и значение текущих элементов массива.");
+        Assertions.assertEquals(3, array.get(3),
+                "Вызов метода expandTo(int newLength) с отрицательным значением не должен изменять " +
+                        "порядок и значение текущих элементов массива.");
 
-        array.expandTo(100);
-        Assertions.assertEquals(100, array.getLength());
-        for(int i = 0; i < 10; i++) Assertions.assertEquals("Cat#" + i, array.get(i));
-        for(int i = 10; i < array.getLength(); i++) Assertions.assertNull(array.get(i));
+        array.expandTo(6);
+        Assertions.assertEquals(6, array.getLength(),
+                "Вызов метода expandTo(int newLength) со значением большим его текущей длины, должен " +
+                        "изменить его размер на заданное значение.");
+        Assertions.assertEquals(0, array.get(0),
+                "Вызов метода expandTo(int newLength) со значением большим его текущей длины не должен " +
+                        "изменять порядок и значение элементов массива находившихся в нем до вызова метода.");
+        Assertions.assertEquals(1, array.get(1),
+                "Вызов метода expandTo(int newLength) со значением большим его текущей длины не должен " +
+                        "изменять порядок и значение элементов массива находившихся в нем до вызова метода.");
+        Assertions.assertEquals(2, array.get(2),
+                "Вызов метода expandTo(int newLength) со значением большим его текущей длины не должен " +
+                        "изменять порядок и значение элементов массива находившихся в нем до вызова метода.");
+        Assertions.assertEquals(3, array.get(3),
+                "Вызов метода expandTo(int newLength) со значением большим его текущей длины не должен " +
+                        "изменять порядок и значение элементов массива находившихся в нем до вызова метода.");
+        Assertions.assertNull(array.get(4),
+                "После расширения массива с помощью expandTo(int newLength) значение элементов начиная " +
+                        "с индекса равного старой длине массива и до последнего элемента - должны иметь значение " +
+                        "null.");
+        Assertions.assertNull(array.get(4),
+                "После расширения массива с помощью expandTo(int newLength) значение элементов начиная " +
+                        "с индекса равного старой длине массива и до последнего элемента - должны иметь значение " +
+                        "null.");
     }
 
     @Test
     public void compressTo() {
-        Array<String> array = new Array<>(String.class, 10);
-        for(int i = 0; i < array.getLength(); i++) array.set(i, "Cat#" + i);
-
-        array.compressTo(500);
-        Assertions.assertEquals(10, array.getLength());
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertEquals("Cat#" + i, array.get(i));
-
-        array.compressTo(10);
-        Assertions.assertEquals(10, array.getLength());
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertEquals("Cat#" + i, array.get(i));
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3);
 
         array.compressTo(5);
-        Assertions.assertEquals(5, array.getLength());
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertEquals("Cat#" + i, array.get(i));
+        Assertions.assertEquals(4, array.getLength(),
+                "Вызов метода compressTo(int newLength) со значением большим текущей длины не должен " +
+                        "изменять размер массива.");
+        Assertions.assertEquals(0, array.get(0),
+                "Вызов метода compressTo(int newLength) со значением большим текущей длины не должен " +
+                        "влиять на порядок и значение элементов массива.");
+        Assertions.assertEquals(1, array.get(1),
+                "Вызов метода compressTo(int newLength) со значением большим текущей длины не должен " +
+                        "влиять на порядок и значение элементов массива.");
+        Assertions.assertEquals(2, array.get(2),
+                "Вызов метода compressTo(int newLength) со значением большим текущей длины не должен " +
+                        "влиять на порядок и значение элементов массива.");
+        Assertions.assertEquals(3, array.get(3),
+                "Вызов метода compressTo(int newLength) со значением большим текущей длины не должен " +
+                        "влиять на порядок и значение элементов массива.");
 
-        array.expandTo(20);
-        for(int i = 5; i < array.getLength(); i++) Assertions.assertNull(array.get(i));
+        array.compressTo(4);
+        Assertions.assertEquals(4, array.getLength(),
+                "Вызов метода compressTo(int newLength) со значением равным текущей длине не должен " +
+                        "изменять размер массива.");
+        Assertions.assertEquals(0, array.get(0),
+                "Вызов метода compressTo(int newLength) со значением равным текущей длине не должен " +
+                        "влиять на порядок и значение элементов массива.");
+        Assertions.assertEquals(1, array.get(1),
+                "Вызов метода compressTo(int newLength) со значением равным текущей длине не должен " +
+                        "влиять на порядок и значение элементов массива.");
+        Assertions.assertEquals(2, array.get(2),
+                "Вызов метода compressTo(int newLength) со значением равным текущей длине не должен " +
+                        "влиять на порядок и значение элементов массива.");
+        Assertions.assertEquals(3, array.get(3),
+                "Вызов метода compressTo(int newLength) со значением равным текущей длине не должен " +
+                        "влиять на порядок и значение элементов массива.");
 
-        for(int i = 0; i < array.getLength(); i++) array.set(i, "Cat");
-        array.compressTo(0);
-        Assertions.assertEquals(0, array.getLength());
-        array.expandTo(100);
-        for(int i = 0; i < array.getLength(); i++) Assertions.assertNull(array.get(i));
+        array.compressTo(2);
+        Assertions.assertEquals(2, array.getLength(),
+                "Вызов метода compressTo(int newLength) со значением меньшим текущей длины должен " +
+                        "изменить размер массива на заданное значение.");
+        Assertions.assertEquals(0, array.get(0),
+                "Вызов метода compressTo(int newLength) со значением меньшим текущей длины не должен " +
+                        "влиять на порядок и значение элементов массива которых меньше заданного значения.");
+        Assertions.assertEquals(1, array.get(1),
+                "Вызов метода compressTo(int newLength) со значением меньшим текущей длины не должен " +
+                        "влиять на порядок и значение элементов массива которых меньше заданного значения.");
+
+        array.expandTo(4);
+        Assertions.assertNull(array.get(2),
+                "Вызов метода compressTo(int newLength) со значением меньшим текущей длины должен " +
+                        "устанавливать значение null для всех элементов индекс которых больше или равен " +
+                        "заданному значению.");
+        Assertions.assertNull(array.get(3),
+                "Вызов метода compressTo(int newLength) со значением меньшим текущей длины должен " +
+                        "устанавливать значение null для всех элементов индекс которых больше или равен " +
+                        "заданному значению.");
+
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,1,2,3);
+        array2.compressTo(0);
+        Assertions.assertEquals(0, array2.getLength(),
+                "Вызов метода compressTo(int newLength) со значением раным 0 должен устанавливать размер " +
+                        "массива в 0.");
+        array2.expandTo(4);
+        Assertions.assertNull(array2.get(0),
+                "Вызов метода compressTo(int newLength) со значением раным 0 должен устанавливать значение " +
+                        "null для всех элементов массива.");
+        Assertions.assertNull(array2.get(1),
+                "Вызов метода compressTo(int newLength) со значением раным 0 должен устанавливать значение " +
+                        "null для всех элементов массива.");
+        Assertions.assertNull(array2.get(2),
+                "Вызов метода compressTo(int newLength) со значением раным 0 должен устанавливать значение " +
+                        "null для всех элементов массива.");
+        Assertions.assertNull(array2.get(3),
+                "Вызов метода compressTo(int newLength) со значением раным 0 должен устанавливать значение " +
+                        "null для всех элементов массива.");
     }
 
     @Test
     public void iterator_hasNext() {
         Array<String> array = new Array<>(String.class, 10);
-        Assertions.assertTrue(array.iterator().hasNext());
+        Assertions.assertTrue(array.iterator().hasNext(),
+                "Для массива не нулевой длины метод hashNext() только что созданного итератора " +
+                        "должен возвращать true.");
 
-        array.set(0, "cat");
-        Assertions.assertTrue(array.iterator().hasNext());
+        Array<String> emptyArray = new Array<>(String.class, 0);
+        Assertions.assertFalse(emptyArray.iterator().hasNext(),
+                "Для массива нулевой длины метод hashNext() только что созданного итератора " +
+                        "должен возвращать false.");
 
-        array.quickRemove(0);
-        Assertions.assertTrue(array.iterator().hasNext());
 
-        for(int i = 0, length = array.getLength(); i < length; i++) array.quickRemove(0);
-        Assertions.assertFalse(array.iterator().hasNext());
+        Array<String> array2 = new Array<>(String.class, 10);
+        array2.compressTo(0);
+        Assertions.assertFalse(array2.iterator().hasNext(),
+                "Для массива реазмер которого был уменьшен до 0 с помощью метода compressTo(int newLength) " +
+                        "метод hashNext() только что созданного итератора должен возвращать false.");
 
-        array.expandTo(10);
-        Assertions.assertTrue(array.iterator().hasNext());
+        Array<String> array3 = new Array<>(String.class, 10);
+        for(int i = array3.getLength() - 1; i >= 0; --i) array3.orderedRemove(0);
+        Assertions.assertFalse(array3.iterator().hasNext(),
+                "Для массива реазмер которого был уменьшен до 0 с помощью метода orderedRemove(int index) " +
+                        "метод hashNext() только что созданного итератора должен возвращать false.");
 
-        array.compressTo(0);
-        Assertions.assertFalse(array.iterator().hasNext());
+        Array<String> array4 = new Array<>(String.class, 10);
+        for(int i = array4.getLength() - 1; i >= 0; --i) array4.quickRemove(0);
+        Assertions.assertFalse(array4.iterator().hasNext(),
+                "Для массива реазмер которого был уменьшен до 0 с помощью метода quickRemove(int index) " +
+                        "метод hashNext() только что созданного итератора должен возвращать false.");
+
+        Array<String> array5 = new Array<>(String.class, 10);
+        array5.clear();
+        Assertions.assertFalse(array5.iterator().hasNext(),
+                "Для массива реазмер которого был уменьшен до 0 с помощью метода clear() " +
+                        "метод hashNext() только что созданного итератора должен возвращать false.");
     }
 
     @Test
@@ -1445,53 +1610,55 @@ class ArrayTest {
 
         Iterator<String> iterator2 = array.iterator();
         while(iterator2.hasNext()) iterator2.next();
-        Assertions.assertThrows(NoSuchElementException.class, iterator2::next);
+        Assertions.assertThrows(NoSuchElementException.class, iterator2::next,
+                "После перебора всех элементов метод next() итератора должен генерировать исключение.");
 
-        array.compressTo(0);
-        Iterator<String> iterator3 = array.iterator();
-        Assertions.assertThrows(NoSuchElementException.class, iterator3::next);
+        Array<String> emptyArray = new Array<>(String.class, 0);
+        Iterator<String> iterator3 = emptyArray.iterator();
+        Assertions.assertThrows(NoSuchElementException.class, iterator3::next,
+                "Для пустого массива метод next() итератора должен генерировать исключение.");
 
-        for(int i = 0; i < 100; i++) array.add("Cat#" + i);
-        array.set(12, null);
-        array.set(20, null);
-        array.set(36, null);
-        Array<String> matcher = new Array<>(String.class, 0);
-        Iterator<String> iterator4 = array.iterator();
-        while(iterator4.hasNext()) matcher.add(iterator4.next());
-        Assertions.assertEquals(array, matcher);
+        Array<String> array2 = new Array<>(String.class, 10);
+        array2.addAll("0", "1", "2", "3", "4");
+        Array<String> expectedItems = new Array<>(String.class, 0);
+        Iterator<String> iterator4 = array2.iterator();
+        while(iterator4.hasNext()) expectedItems.add(iterator4.next());
+        Assertions.assertEquals(array2, expectedItems,
+                "Итератор должен перебирать все элементы массива в линейном порядке начиная с элемента " +
+                        "с индексом 0.");
     }
 
     @Test
     public void forEach() {
-        Array<String> array = new Array<>(String.class, 100);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3,4,5,6,7,8,9);
         final int[] countIterations = new int[1];
-        array.forEach((String value) -> ++countIterations[0]);
-        Assertions.assertEquals(100, countIterations[0],
-                "Кол-во итераций метода forEach() должно равняться длине массива(getLength()).");
+        array.forEach((Integer value) -> ++countIterations[0]);
+        Assertions.assertEquals(10, countIterations[0],
+                "Кол-во итераций метода forEach(Consumer<T> action) должно равняться длине массива(getLength()).");
 
-        for(int i = 0; i < 100; i++) array.set(i, "Cat");
-        for(int i = 0; i < 100; i++) array.quickRemove(0);
-        countIterations[0] = 0;
-        array.forEach((String value) -> ++countIterations[0]);
-        Assertions.assertEquals(0, countIterations[0],
-                "Если объект Array имеет нулевую длину, то метод forEach() не должен " +
-                        "выполнять ни одной итерации.");
+        Array<Integer> emptyArray = new Array<>(Integer.class, 0);
+        emptyArray.forEach((Integer value) -> Assertions.fail(
+                "Если объект Array имеет нулевую длину, то метод forEach(Consumer<T> action) не должен " +
+                "выполнять ни одной итерации."));
 
-        for(int i = 0; i < 100; i++) array.add("Cat#" + i);
-        Array<String> matcher = new Array<>(String.class, 0);
-        array.forEach(matcher::add);
-        Assertions.assertEquals(array, matcher);
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,1,2,3,4,5,6,7,8,9);
+        Array<Integer> actualItems = new Array<>(Integer.class, 0);
+        array2.forEach(actualItems::add);
+        Assertions.assertEquals(array, actualItems,
+                "Метод forEach(Consumer<T> action) должен перебирать все элементы массива.");
 
         Assertions.assertThrows(ConcurrentModificationException.class,
-                () -> array.forEach((String value)->array.add("Unique cat.")));
+                () -> array.forEach((Integer value)->array.add(1000)));
     }
 
     @Test
     public void equals() {
-        Array<String> array = new Array<>(String.class, 1000);
-        for(int i = 0; i < array.getLength(); i++) array.set(i, "Cat#" + i);
-        Array<String> array2 = new Array<>(String.class, 1000);
-        for(int i = 0; i < array2.getLength(); i++) array2.set(i, "Cat#" + i);
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3,4,5,6,7,8,9);
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,1,2,3,4,5,6,7,8,9);
 
         Assertions.assertEquals(array, array2,
                 "Не верно работает метод equals().");
@@ -1504,40 +1671,42 @@ class ArrayTest {
         Assertions.assertEquals(array.equals(array2), array2.equals(array),
                 "Не соблюдается свойство симметрисности для метода equals().");
 
-        array2.expandTo(10000);
-        Assertions.assertNotEquals(array, array2,
-                "Не верно работает метод equals().");
-        Assertions.assertEquals(array2.equals(array), array.equals(array2),
-                "Не соблюдается свойство симметрисности для метода equals().");
-
-        Array<String> array3 = new Array<>(String.class, 2000);
-        for(int i = 0; i < array3.getLength(); i++) array3.set(i, "Cat#" + i);
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(0,1,2,3,4,5,6,7,8,9);
+        array3.expandTo(1000);
         Assertions.assertNotEquals(array, array3,
-                "Не верно работает метод equals().");
+                "Метод  equals() должен возвращать false для массивов разной длины.");
         Assertions.assertEquals(array3.equals(array), array.equals(array3),
-                "Не соблюдается свойство симметрисности для метода equals().");
+                "Не соблюдается свойство симметрисности для метода equals(), в случае, когда массивы " +
+                        "не равны.");
 
-        Assertions.assertTrue(!array.equals(array2) && !array2.equals(array3) && !array.equals(array3),
-                "Не соблюдается свойство транзитивности для сетода equals().");
+        Array<Integer> array4 = new Array<>(Integer.class, 0);
+        array4.addAll(0,1,2,3,10,10,10,9,8,7);
+        Assertions.assertNotEquals(array, array4,
+                "Метод  equals() должен возвращать false для массивов одинаковой длины, но с разным " +
+                        "набором и/или последовательностью элементов.");
+        Assertions.assertEquals(array4.equals(array), array.equals(array4),
+                "Не соблюдается свойство симметрисности для метода equals(), в случае, когда массивы " +
+                        "не равны.");
 
-        array2 = new Array<>(String.class, 1000);
-        for(int i = 0; i < array2.getLength(); i++) array2.set(i, "Cat#" + i);
-        array3 = new Array<>(String.class, 1000);
-        for(int i = 0; i < array3.getLength(); i++) array3.set(i, "Cat#" + i);
-        Assertions.assertTrue(array.equals(array2) && array2.equals(array3) && array.equals(array3),
-                "Не соблюдается свойство транзитивности для сетода equals().");
+        Array<Integer> array5 = new Array<>(Integer.class, 0);
+        array5.addAll(0,1,2,3,4,5,6,7,8,9);
+        Array<Integer> array6 = new Array<>(Integer.class, 0);
+        array6.addAll(0,1,2,3,4,5,6,7,8,9);
+        Array<Integer> array7 = new Array<>(Integer.class, 0);
+        array7.addAll(0,1,2,3,4,5,6,7,8,9);
+        Assertions.assertTrue(array5.equals(array6) && array6.equals(array7) && array5.equals(array7),
+                "Не соблюдается свойство транзитивности для метода equals().");
     }
 
     @Test
     public void hashCode_Properties() {
-        Array<String> array = new Array<>(String.class, 1000);
-        for(int i = 0; i < array.getLength(); i++) array.set(i, "Cat#" + i);
-        for(int i = 200; i < 307; i++) array.set(i, null);
-        Array<String> array2 = new Array<>(String.class, 1000);
-        for(int i = 0; i < array2.getLength(); i++) array2.set(i, "Cat#" + i);
-        for(int i = 200; i < 307; i++) array2.set(i, null);
-        Array<String> array3 = new Array<>(String.class, 1000);
-        for(int i = 0; i < array3.getLength(); i++) array3.set(i, "Cat#" + (i*2));
+        Array<Integer> array = new Array<>(Integer.class, 0);
+        array.addAll(0,1,2,3,4,5,6,7,8,9);
+        Array<Integer> array2 = new Array<>(Integer.class, 0);
+        array2.addAll(0,1,2,3,4,5,6,7,8,9);
+        Array<Integer> array3 = new Array<>(Integer.class, 0);
+        array3.addAll(9,8,7,6,5,4,3,2,1,0);
 
         Assertions.assertEquals(array.hashCode(), array2.hashCode(),
                 "Если объекты равны по equals(), то их хеш-коды тоже должны быть равны.");
@@ -1552,24 +1721,6 @@ class ArrayTest {
             Assertions.assertEquals(hashCode, array.hashCode(),
                     "Для одного и того же состояния объекта hashCode() должен возвращать одно и тоже значение.");
         }
-    }
-
-    private void mix(int[] array, long key) {
-        Random random = new Random(key);
-        for(int i = 0; i < array.length; i++) {
-            int randomIndex = (int)(random.nextDouble() * array.length);
-            int temp = array[i];
-            array[i] = array[randomIndex];
-            array[randomIndex] = temp;
-        }
-    }
-
-    private boolean compare(Array<Integer> array, int[] array2) {
-        boolean isEqual = true;
-        for(int i = 0; i < array.getLength() && isEqual; i++) {
-            isEqual = array.get(i) == array2[i];
-        }
-        return isEqual;
     }
 
 }

@@ -13,10 +13,11 @@ import java.util.function.Consumer;
  */
 public final class IntMap<T> implements Iterable<IntMap.Node<T>> {
 
+    private static final float LOAD_FACTOR = 0.75F;
+    private static final int MAX_CAPACITY = 1073741824;
+
     private int size;
     private Node<T>[] table;
-    private final float LOAD_FACTOR = 0.75F;
-    private final int MAX_CAPACITY = 1073741824;
     private int actualModCount;
 
     /**
@@ -141,7 +142,8 @@ public final class IntMap<T> implements Iterable<IntMap.Node<T>> {
      */
     public void fillArrayWithValues(T[] array) throws IllegalArgumentException {
         if(array.length < size) {
-            throw new IllegalArgumentException("Размер передаваемого массива не может быть меньше значения возвращаемого " +
+            throw new IllegalArgumentException(
+                    "Размер передаваемого массива не может быть меньше значения возвращаемого " +
                     "getSize(). Значение getSize() = " + size + ", array.length = " + array.length);
         }
 
@@ -154,6 +156,27 @@ public final class IntMap<T> implements Iterable<IntMap.Node<T>> {
                 currentNode = currentNode.next;
             }
         }
+    }
+
+    /**
+     * Создает и возвращает объект {@link Array} содержащий все значения находящиеся в данном объекте
+     * IntMap.
+     * @param valueType тип значений хранящихся в данном объекте IntMap.
+     * @return объект {@link Array} содержащий все значения находящиеся в данном объекте IntMap.
+     */
+    @SuppressWarnings("unchecked")
+    public Array<T> getValues(Class<T> valueType) {
+        Array<T> array = new Array(valueType, size);
+
+        for(int i = 0, arrayIndex = 0; i < table.length; i++) {
+            Node<T> currentNode = table[i];
+            while(currentNode != null) {
+                array.set(arrayIndex++, currentNode.value);
+                currentNode = currentNode.next;
+            }
+        }
+
+        return array;
     }
 
     /**
@@ -211,11 +234,10 @@ public final class IntMap<T> implements Iterable<IntMap.Node<T>> {
      */
     @Override
     public void forEach(Consumer<? super Node<T>> action) {
-        Node<T> currentNode = null;
         final int EXPECTED_COUNT_MOD = actualModCount;
 
         for(int i = 0; i < table.length; i++) {
-            currentNode = table[i];
+            Node<T> currentNode = table[i];
             while(currentNode != null) {
                 action.accept(currentNode);
                 if(EXPECTED_COUNT_MOD != actualModCount) {

@@ -1,6 +1,6 @@
 package com.bakuard.ecsEngine;
 
-import com.bakuard.ecsEngine.core.utils.IntArray;
+import com.bakuard.ecsEngine.core.utils.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -910,23 +910,32 @@ class IntArrayTest {
     @Test
     public void linearSearch_Interval() {
         IntArray array = new IntArray(0);
-        for(int i = 0; i < 100; i++) array.add(i);
+        array.addAll(0,1,2,3,4,4,4,7,8,9);
 
-        for(int i = 12; i < 87; i++)
-            Assertions.assertEquals(i, array.linearSearch(i, 12, 87));
+        Assertions.assertEquals(4, array.linearSearch(4, 2, 10),
+                "Метод linearSearch(int value, int fromIndex, int toIndex) должен возвращать индекс " +
+                        "первого встретевшегося элемента с начала интервала поиска, значение которого равно " +
+                        "значению искомого элемента.");
+        Assertions.assertEquals(2, array.linearSearch(2, 2, 10),
+                "Если искомый элемент на промежутке [fromIndex, toIndex) встречается впервые под индексом " +
+                        "fromIndex, метод linearSearch(int value, int fromIndex, int toIndex) должен возвращать " +
+                        "индекс равный fromIndex.");
+        Assertions.assertEquals(-1, array.linearSearch(2, 3, 10),
+                "Метод linearSearch(int value, int fromIndex, int toIndex) должен возвращать -1, если " +
+                        "искомый элемент присутвует в массиве, но отсутсует в заданном интервале поиска.");
+        Assertions.assertEquals(-1, array.linearSearch(12, 0, 10),
+                "Метод linearSearch(int value, int fromIndex, int toIndex) должен возвращать -1, если искомый " +
+                        "элемент отсутвует в массиве.");
+        Assertions.assertEquals(-1, array.linearSearch(1, 1, 1),
+                "Если fromIndex == toIndex, метод linearSearch(int value, int fromIndex, int toIndex) " +
+                        "должен возвращать -1.");
 
-        for(int i = 15; i < 24; i++) array.set(i, 1200);
-        Assertions.assertEquals(15, array.linearSearch(1200, 12, 30));
-
-        Assertions.assertEquals(-1, array.linearSearch(51, 0, 50));
-        Assertions.assertEquals(-1, array.linearSearch(51, 51, 51));
-
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                ()-> array.linearSearch(0, -1, 100));
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                ()-> array.linearSearch(0, 0, 101));
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                ()-> array.linearSearch(0, 100, 0));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class,
+                ()-> array.linearSearch(0, -1, 11));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class,
+                ()-> array.linearSearch(0, 0, 11));
+        Assertions.assertThrows(ArrayIndexOutOfBoundsException.class,
+                ()-> array.linearSearch(0, 10, 0));
     }
 
     @Test
