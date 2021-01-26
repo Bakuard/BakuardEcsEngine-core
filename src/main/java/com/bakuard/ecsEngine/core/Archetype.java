@@ -16,12 +16,14 @@ final class Archetype {
     private final Array<Entity> ENTITIES;
     private final IntMap<Array<Component>> COMPONENTS;
     private final Bits COMPONENT_TYPES;
+    private final Bits FILTER_PARAM; //копия COMPONENT_TYPES передаваемая в фильтр сущностей.
     private final IntArray ENTITIES_TYPE; //Используется для оптимизации фильтрации сущностей по типам.
 
     Archetype(Bits componentTypes) {
         ENTITIES = new Array<>(Entity.class, 0);
         COMPONENTS = new IntMap<>();
-        this.COMPONENT_TYPES = componentTypes;
+        COMPONENT_TYPES = componentTypes;
+        FILTER_PARAM = new Bits(componentTypes);
         ENTITIES_TYPE = new IntArray(0);
 
         int componentTypeID = componentTypes.nextSetBit(0);
@@ -183,7 +185,7 @@ final class Archetype {
         return ENTITIES.iterator();
     }
 
-    //Возвращаемый массив сущностей используется EntityComponentManager только для чтения.
+    //Возвращаемый массив сущностей. Используется EntityComponentManager только для чтения.
     Array<Entity> getEntities() {
         return ENTITIES;
     }
@@ -201,11 +203,7 @@ final class Archetype {
     }
 
     private boolean isValidComponentTypes(final EntitiesFilter FILTER) {
-        /*
-        * Передаем фильтру копию COMPONENT_TYPES, чтобы защитить COMPONENT_TYPES
-        * от изменений со стороны клиентского кода.
-         */
-        return FILTER.isValidComponentTypes(new Bits(COMPONENT_TYPES));
+        return FILTER.isValidComponentTypes(FILTER_PARAM.copyState(COMPONENT_TYPES));
     }
 
 }

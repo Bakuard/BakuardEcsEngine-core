@@ -543,7 +543,8 @@ public final class EntityComponentManager {
 
     /**
      * Последовательно выполняет все операции сохраненые в буфере для отложенного выполнения операций по созданию
-     * сущностей, их удалению и изменению их состава компонентов.
+     * сущностей, их удалению и изменению их состава компонентов. Любое исключение, выброшенно из handler, будет
+     * обернуто в непроверяемое исключение {@link BatchException}.
      * @param buffer буфер для отложенного выполнения операций.
      * @param handler обработчик для ошибок, которые могут возникнуть в ходе выполнения операций из буфера.
      * @throws BatchException если пакетная операция была прервана.
@@ -571,30 +572,25 @@ public final class EntityComponentManager {
 
                         mask.clear(entityID);
                         break;
-                    case REMOVE_ENTITY:
-                        removeEntity(operation.ENTITY);
+                    case REMOVE_ENTITY: removeEntity(operation.ENTITY);
                         break;
-                    case BIND_COMPONENT:
-                        bind(operation.COMPONENTS[0]);
+                    case BIND_COMPONENT: bind(operation.COMPONENTS[0]);
                         break;
-                    case UNBIND_COMPONENT:
-                        unbind(operation.COMPONENTS[0]);
+                    case UNBIND_COMPONENT: unbind(operation.COMPONENTS[0]);
                         break;
-                    case BIND_COMPONENTS:
-                        bind(operation.COMPONENTS);
+                    case BIND_COMPONENTS: bind(operation.COMPONENTS);
                         break;
-                    case UNBIND_COMPONENTS:
-                        unbind(operation.COMPONENTS);
+                    case UNBIND_COMPONENTS: unbind(operation.COMPONENTS);
                         break;
                 }
             } catch(IllegalArgumentException e) {
                 try {
                     handler.handle(e);
-                } catch(BatchException batchException) {
+                } catch(Exception exception) {
                     synchronized(this) {
                         AVAILABLE_ENTITIES_ID.and(mask.expandTo(AVAILABLE_ENTITIES_ID.getSize()).not());
                     }
-                    throw batchException;
+                    throw new BatchException(exception);
                 }
             }
         }
@@ -604,7 +600,7 @@ public final class EntityComponentManager {
 
     /*
      * Данный метод также вызывается из EntityCommandBuffer и NewEntitiesBuffer, и таким оразом может быть вызван
-     * из другого потока.
+     * из разных потоков.
      */
     int getGeneration(int entityPersonalID) {
         ENTITY_GENERATIONS.expandTo(entityPersonalID);
@@ -613,7 +609,7 @@ public final class EntityComponentManager {
 
     /*
     * Данный метод также вызывается из EntityCommandBuffer и NewEntitiesBuffer, и таким оразом может быть вызван
-    * из другого потока.
+    * из разных потоков.
      */
     int getNewEntityID() {
         int entityID = AVAILABLE_ENTITIES_ID.nextClearBit(0);
@@ -629,7 +625,7 @@ public final class EntityComponentManager {
 
     /*
      * Данный метод также вызывается из EntityCommandBuffer и NewEntitiesBuffer, и таким оразом может быть вызван
-     * из другого потока.
+     * из разных потоков.
      */
     synchronized void freeEntityID(int entityID) {
         AVAILABLE_ENTITIES_ID.clear(entityID);
