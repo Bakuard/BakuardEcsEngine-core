@@ -44,7 +44,7 @@ public final class EntityCommandBuffer {
     private final EntityComponentManager MANAGER;
     private final Bits USED_ENTITIES_ID;
     private final ArrayDeque<Operation> OPERATIONS;
-    private boolean isValid; //После flush'а буфер нельзя переиспользовать
+    private boolean isValid; //После flush'а, буфер нельзя переиспользовать
 
     EntityCommandBuffer(EntityComponentManager manager) {
         MANAGER = manager;

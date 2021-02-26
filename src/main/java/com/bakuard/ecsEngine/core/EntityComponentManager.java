@@ -63,8 +63,7 @@ public final class EntityComponentManager {
 
             Entity entity = new Entity(entityTypeID, entityID, generation);
             ENTITIES_BY_ID.setAndExpand(entityID, entity);
-            LIVE_ENTITIES.expandTo(entityID);
-            LIVE_ENTITIES.set(entityID);
+            LIVE_ENTITIES.expandTo(entityID).set(entityID);
             ARCHETYPES.get(EMPTY_ENTITIES_INDEX).addEntity(INDEXES_BY_ENTITIES_ID, entity);
             ARCHETYPES_BY_ENTITIES.setAndExpand(entityID, ARCHETYPES.get(EMPTY_ENTITIES_INDEX));
 
@@ -134,7 +133,7 @@ public final class EntityComponentManager {
     public Iterator<Entity> getEntities(final EntitiesFilter FILTER) {
         return new Iterator<>() {
 
-            private int currentBasketIndex = -1;
+            private int currentArchetypeIndex = -1;
             private Iterator<Entity> iteratorEntities;
             private Entity currentEntity;
             private final int EXPECTED_MOD_COUNT;
@@ -142,8 +141,8 @@ public final class EntityComponentManager {
             {
                 EXPECTED_MOD_COUNT = actualModCount;
 
-                while(currentEntity == null && ++currentBasketIndex < ARCHETYPES.getLength()) {
-                    Archetype archetype = ARCHETYPES.get(currentBasketIndex);
+                while(currentEntity == null && ++currentArchetypeIndex < ARCHETYPES.getLength()) {
+                    Archetype archetype = ARCHETYPES.get(currentArchetypeIndex);
 
                     if(archetype.isValid(FILTER)) {
                         iteratorEntities = archetype.getEntitiesIterator();
@@ -177,8 +176,8 @@ public final class EntityComponentManager {
                         if(FILTER.isValidEntityType(temp.getTypeID())) currentEntity = temp;
                     }
 
-                    while(currentEntity == null && ++currentBasketIndex < ARCHETYPES.getLength()) {
-                        Archetype archetype = ARCHETYPES.get(currentBasketIndex);
+                    while(currentEntity == null && ++currentArchetypeIndex < ARCHETYPES.getLength()) {
+                        Archetype archetype = ARCHETYPES.get(currentArchetypeIndex);
 
                         if(archetype.isValid(FILTER)) {
                             iteratorEntities = archetype.getEntitiesIterator();
@@ -333,8 +332,7 @@ public final class EntityComponentManager {
             archetype.addComponent(INDEXES_BY_ENTITIES_ID.get(owner.getPersonalID()), component);
         } else {
             final Bits MASK = archetype.getCopyComponentTypes();
-            MASK.expandTo(component.getTypeID() + 1);
-            MASK.set(component.getTypeID());
+            MASK.expandTo(component.getTypeID() + 1).set(component.getTypeID());
             int indexArchetype = ARCHETYPES.binarySearch((Archetype b) -> b.compareComponentTypes(MASK));
 
             Archetype newArchetype = null;
@@ -370,8 +368,7 @@ public final class EntityComponentManager {
         if(archetype.hasMoreThanOneComponent(entityIndex, component.getTypeID())) {
             archetype.removeComponent(entityIndex, component);
         } else {
-            final Bits MASK = archetype.getCopyComponentTypes();
-            MASK.clear(component.getTypeID());
+            final Bits MASK = archetype.getCopyComponentTypes().clear(component.getTypeID());
             int indexArchetype = ARCHETYPES.binarySearch((Archetype b) -> b.compareComponentTypes(MASK));
 
             Archetype newArchetype = null;
@@ -412,8 +409,7 @@ public final class EntityComponentManager {
         Archetype archetype = ARCHETYPES_BY_ENTITIES.get(entityPersonalID);
         final Bits MASK = archetype.getCopyComponentTypes();
         for(Component comp : components) {
-            MASK.expandTo(comp.getTypeID());
-            MASK.set(comp.getTypeID());
+            MASK.expandTo(comp.getTypeID()).set(comp.getTypeID());
         }
 
         if(archetype.containsComponentTypes(MASK)) {
@@ -460,8 +456,7 @@ public final class EntityComponentManager {
         final Bits MASK = archetype.getCopyComponentTypes();
         boolean hasMoreThanOneComponents = true;
         for(Component comp : components) {
-            MASK.expandTo(comp.getTypeID());
-            MASK.set(comp.getTypeID());
+            MASK.expandTo(comp.getTypeID()).set(comp.getTypeID());
             hasMoreThanOneComponents &= archetype.hasMoreThanOneComponent(entityIndex, comp.getTypeID());
         }
 

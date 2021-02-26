@@ -38,7 +38,7 @@ public final class NewEntitiesBuffer {
     private final Array<Archetype> ARCHETYPES_BY_ENTITIES;
 
     private final int EMPTY_ENTITIES_INDEX; //Индекс корзины хранящей все сущности без компонентов.
-    private boolean isValid; //После flush'а буфер нельзя переиспользовать
+    private boolean isValid; //После flush'а, буфер нельзя переиспользовать
 
     NewEntitiesBuffer(EntityComponentManager manager) {
         EMPTY_ENTITIES_INDEX = 0;
@@ -137,9 +137,9 @@ public final class NewEntitiesBuffer {
         if(archetype.containsComponentType(component.getTypeID())) {
             archetype.addComponent(INDEXES_BY_ENTITIES_ID.get(owner.getPersonalID()), component);
         } else {
-            final Bits MASK = archetype.getCopyComponentTypes();
-            MASK.expandTo(component.getTypeID() + 1);
-            MASK.set(component.getTypeID());
+            final Bits MASK = archetype.getCopyComponentTypes().
+                    expandTo(component.getTypeID() + 1).
+                    set(component.getTypeID());
             int indexBasket = ARCHETYPES.binarySearch((Archetype b) -> b.compareComponentTypes(MASK));
 
             Archetype newArchetype = null;
@@ -177,8 +177,7 @@ public final class NewEntitiesBuffer {
         if(archetype.hasMoreThanOneComponent(entityIndex, component.getTypeID())) {
             archetype.removeComponent(entityIndex, component);
         } else {
-            final Bits MASK = archetype.getCopyComponentTypes();
-            MASK.clear(component.getTypeID());
+            final Bits MASK = archetype.getCopyComponentTypes().clear(component.getTypeID());
             int indexBasket = ARCHETYPES.binarySearch((Archetype b) -> b.compareComponentTypes(MASK));
 
             Archetype newArchetype = null;
@@ -223,8 +222,7 @@ public final class NewEntitiesBuffer {
         Archetype archetype = ARCHETYPES_BY_ENTITIES.get(entityPersonalID);
         final Bits MASK = archetype.getCopyComponentTypes();
         for(Component comp : components) {
-            MASK.expandTo(comp.getTypeID());
-            MASK.set(comp.getTypeID());
+            MASK.expandTo(comp.getTypeID()).set(comp.getTypeID());
         }
 
         if(archetype.containsComponentTypes(MASK)) {
@@ -275,8 +273,7 @@ public final class NewEntitiesBuffer {
         final Bits MASK = archetype.getCopyComponentTypes();
         boolean hasMoreThanOneComponents = true;
         for(Component comp : components) {
-            MASK.expandTo(comp.getTypeID());
-            MASK.set(comp.getTypeID());
+            MASK.expandTo(comp.getTypeID()).set(comp.getTypeID());
             hasMoreThanOneComponents &= archetype.hasMoreThanOneComponent(entityIndex, comp.getTypeID());
         }
 

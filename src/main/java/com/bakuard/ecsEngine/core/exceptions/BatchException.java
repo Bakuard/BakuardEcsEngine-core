@@ -1,12 +1,12 @@
 package com.bakuard.ecsEngine.core.exceptions;
 
 import com.bakuard.ecsEngine.core.EntityCommandBuffer;
+import com.bakuard.ecsEngine.core.EntityComponentManager;
 
 /**
  * Непроверяемое исключение, которое может быть выброшено при выполнении метода
- * {@link com.bakuard.ecsEngine.core.EntityComponentManager#flushBuffer(EntityCommandBuffer, ExceptionHandler)}.
- * Данное исключение генерируется методом {@link ExceptionHandler#handle(Exception)}, если возникла необходимость
- * прервать пакетную операцию.
+ * {@link EntityComponentManager#flushBuffer(EntityCommandBuffer, ExceptionHandler)}. Данное исключение
+ * сигнализирует о прерывании пакетной операции.
  */
 public final class BatchException extends RuntimeException {
 
